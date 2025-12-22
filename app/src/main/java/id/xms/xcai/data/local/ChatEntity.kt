@@ -21,5 +21,6 @@ data class ChatEntity(
     val conversationId: Long,
     val message: String,
     val isUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val imageUri: String? = null // For image messages
 )

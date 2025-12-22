@@ -10,6 +10,10 @@ import id.xms.xcai.data.local.ChatEntity
 import id.xms.xcai.data.local.ConversationEntity
 import id.xms.xcai.data.remote.GroqApiService
 import id.xms.xcai.data.remote.GroqChatRequest
+import id.xms.xcai.data.remote.GroqVisionRequest
+import id.xms.xcai.data.remote.VisionMessage
+import id.xms.xcai.data.remote.ContentPart
+import id.xms.xcai.data.remote.ImageUrl
 import id.xms.xcai.data.remote.Message
 import id.xms.xcai.data.preferences.UserPreferences
 import kotlinx.coroutines.flow.Flow
@@ -418,4 +422,90 @@ class ChatRepository(context: Context) {
             conversationDao.deleteAllConversationsByUser(userId)
         }
     }
+
+    // Vision/Image Analysis Function
+    suspend fun sendVisionMessageToGroq(
+        conversationId: Long,
+        userMessage: String,
+        imageBase64: String,
+        userId: String,
+        maxRequests: Int = 20,
+        systemPrompt: String = "You are a helpful AI assistant with vision capabilities. Analyze images and provide clear, accurate, and detailed responses about what you see."
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            Log.d("ChatRepository", "=== SEND VISION MESSAGE TO GROQ ===")
+            Log.d("ChatRepository", "Image base64 length: ${imageBase64.length}")
+
+            val (canProceed, errorMessage) = checkServerRateLimit(userId, maxRequests)
+            if (!canProceed) {
+                return@withContext Result.failure(Exception(errorMessage))
+            }
+
+            val apiKey = getApiKeyFromFirebase()
+            
+            // Use Llama 4 Maverick for vision
+            val visionModel = "meta-llama/llama-4-maverick-17b-128e-instruct"
+            
+            // Build multimodal content
+            val contentParts = mutableListOf<ContentPart>()
+            
+            // Add text prompt
+            contentParts.add(ContentPart.TextPart(text = userMessage))
+            
+            // Add image
+            val imageDataUrl = "data:image/jpeg;base64,$imageBase64"
+            contentParts.add(ContentPart.ImagePart(imageUrl = ImageUrl(url = imageDataUrl)))
+
+            val messages = listOf(
+                VisionMessage(
+                    role = "system",
+                    content = listOf(ContentPart.TextPart(text = systemPrompt))
+                ),
+                VisionMessage(
+                    role = "user",
+                    content = contentParts
+                )
+            )
+
+            Log.d("ChatRepository", "Sending vision request to model: $visionModel")
+
+            val request = GroqVisionRequest(
+                model = visionModel,
+                messages = messages,
+                temperature = 0.7,
+                maxTokens = 2048
+            )
+
+            val response = groqApi.sendVisionMessage(
+                authorization = "Bearer $apiKey",
+                request = request
+            )
+
+            val assistantMessage = response.choices.firstOrNull()?.message?.content
+                ?: throw Exception("No response from API")
+
+            Log.d("ChatRepository", "Vision response received, length: ${assistantMessage.length}")
+            Result.success(assistantMessage)
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Error in sendVisionMessageToGroq: ${e.message}")
+            
+            val userFriendlyMessage = when {
+                e.message?.contains("Rate limit", ignoreCase = true) == true ->
+                    "Rate limit reached. Please wait before sending more messages."
+                e.message?.contains("network", ignoreCase = true) == true ||
+                        e.message?.contains("unable to resolve host", ignoreCase = true) == true ->
+                    "Network error. Please check your connection."
+                e.message?.contains("timeout", ignoreCase = true) == true ->
+                    "Request timed out. Please try again."
+                e.message?.contains("413", ignoreCase = true) == true ||
+                        e.message?.contains("too large", ignoreCase = true) == true ->
+                    "Image is too large. Please select a smaller image."
+                else ->
+                    "Unable to analyze image. Please try again."
+            }
+            
+            Result.failure(Exception(userFriendlyMessage))
+        }
+    }
 }
+

@@ -39,3 +39,44 @@ data class Choice(
     @SerializedName("finish_reason")
     val finishReason: String
 )
+
+// ====== Vision/Multimodal Support ======
+
+data class GroqVisionRequest(
+    @SerializedName("model")
+    val model: String = "meta-llama/llama-4-maverick-17b-128e-instruct",
+    @SerializedName("messages")
+    val messages: List<VisionMessage>,
+    @SerializedName("temperature")
+    val temperature: Double = 0.7,
+    @SerializedName("max_tokens")
+    val maxTokens: Int = 2048
+)
+
+data class VisionMessage(
+    @SerializedName("role")
+    val role: String,
+    @SerializedName("content")
+    val content: List<ContentPart>
+)
+
+sealed class ContentPart {
+    data class TextPart(
+        @SerializedName("type")
+        val type: String = "text",
+        @SerializedName("text")
+        val text: String
+    ) : ContentPart()
+
+    data class ImagePart(
+        @SerializedName("type")
+        val type: String = "image_url",
+        @SerializedName("image_url")
+        val imageUrl: ImageUrl
+    ) : ContentPart()
+}
+
+data class ImageUrl(
+    @SerializedName("url")
+    val url: String
+)

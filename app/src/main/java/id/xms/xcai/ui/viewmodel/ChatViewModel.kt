@@ -34,7 +34,9 @@ data class ChatUiState(
     val streamingText: String = "",
     val isStreaming: Boolean = false,
     val isThinking: Boolean = false,
-    val currentResponseMode: ResponseMode = ResponseMode.CHAT
+    val currentResponseMode: ResponseMode = ResponseMode.CHAT,
+    val selectedImageUri: String? = null,  // For image preview
+    val selectedImageBase64: String? = null // For sending to API
 )
 
 data class ConversationUiState(
@@ -537,6 +539,108 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearError() {
         _chatUiState.value = _chatUiState.value.copy(error = null)
+    }
+
+    // Image handling functions
+    fun setSelectedImage(uri: String?, base64: String?) {
+        _chatUiState.value = _chatUiState.value.copy(
+            selectedImageUri = uri,
+            selectedImageBase64 = base64
+        )
+    }
+
+    fun clearSelectedImage() {
+        _chatUiState.value = _chatUiState.value.copy(
+            selectedImageUri = null,
+            selectedImageBase64 = null
+        )
+    }
+
+    fun sendImageMessage(userId: String, message: String, imageBase64: String, imageUri: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("ChatViewModel", "=== SEND IMAGE MESSAGE ===")
+                Log.d("ChatViewModel", "Message: $message")
+                Log.d("ChatViewModel", "Image base64 length: ${imageBase64.length}")
+
+                _chatUiState.value = _chatUiState.value.copy(
+                    isLoading = true,
+                    error = null,
+                    isThinking = false
+                )
+
+                var conversationId = _chatUiState.value.currentConversationId
+
+                if (conversationId == null) {
+                    Log.d("ChatViewModel", "Creating new conversation for image...")
+                    conversationId = repository.createConversation(
+                        userId = userId,
+                        title = "Image: ${message.take(30)}"
+                    )
+                    _chatUiState.value = _chatUiState.value.copy(currentConversationId = conversationId)
+                    loadChats(conversationId)
+                }
+
+                // Insert user message with image reference
+                repository.insertChat(
+                    ChatEntity(
+                        conversationId = conversationId,
+                        message = message,
+                        isUser = true,
+                        imageUri = imageUri
+                    )
+                )
+
+                // Clear selected image after sending
+                clearSelectedImage()
+
+                _chatUiState.value = _chatUiState.value.copy(isThinking = true)
+
+                val maxRequests = premiumManager.getMaxRequests(_premiumStatus.value)
+
+                val result = repository.sendVisionMessageToGroq(
+                    conversationId = conversationId,
+                    userMessage = message,
+                    imageBase64 = imageBase64,
+                    userId = userId,
+                    maxRequests = maxRequests
+                )
+
+                result.onSuccess { aiResponse ->
+                    Log.d("ChatViewModel", "Vision API success")
+
+                    _chatUiState.value = _chatUiState.value.copy(
+                        isThinking = false,
+                        isLoading = false
+                    )
+
+                    startTypewriterEffect(conversationId, aiResponse)
+                    loadRemainingRequests(userId)
+
+                }.onFailure { exception ->
+                    Log.e("ChatViewModel", "Vision API failed: ${exception.message}")
+
+                    _chatUiState.value = _chatUiState.value.copy(
+                        isLoading = false,
+                        isThinking = false,
+                        error = exception.message ?: "Unable to analyze image"
+                    )
+
+                    loadRemainingRequests(userId)
+                }
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error in sendImageMessage: ${e.message}", e)
+
+                _chatUiState.value = _chatUiState.value.copy(
+                    isLoading = false,
+                    isThinking = false,
+                    error = "An unexpected error occurred. Please try again."
+                )
+
+                loadRemainingRequests(userId)
+            }
+        }
     }
 
     fun clearCurrentConversation() {

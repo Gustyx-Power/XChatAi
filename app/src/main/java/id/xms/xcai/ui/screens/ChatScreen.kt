@@ -1,7 +1,14 @@
 package id.xms.xcai.ui.screens
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Base64
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,9 +27,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
@@ -55,19 +65,26 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import id.xms.xcai.ui.components.AIThinkingIndicator
 import id.xms.xcai.ui.components.AITypingIndicator
 import id.xms.xcai.ui.components.MessageItem
 import id.xms.xcai.ui.components.StreamingMessageItem
 import id.xms.xcai.ui.viewmodel.AuthViewModel
 import id.xms.xcai.ui.viewmodel.ChatViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +107,50 @@ fun ChatScreen(
     var showRateLimitDialog by remember { mutableStateOf(false) }
     var showLowQuotaWarning by remember { mutableStateOf(false) }
     var rateLimitMessage by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { imageUri ->
+            scope.launch {
+                try {
+                    val base64 = withContext(Dispatchers.IO) {
+                        val inputStream = context.contentResolver.openInputStream(imageUri)
+                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                        inputStream?.close()
+                        
+                        // Resize if too large (max 1024px on largest side)
+                        val maxSize = 1024
+                        val scale = minOf(
+                            maxSize.toFloat() / bitmap.width,
+                            maxSize.toFloat() / bitmap.height,
+                            1f
+                        )
+                        val scaledBitmap = if (scale < 1f) {
+                            Bitmap.createScaledBitmap(
+                                bitmap,
+                                (bitmap.width * scale).toInt(),
+                                (bitmap.height * scale).toInt(),
+                                true
+                            )
+                        } else bitmap
+                        
+                        val outputStream = ByteArrayOutputStream()
+                        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+                        Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
+                    }
+                    chatViewModel.setSelectedImage(imageUri.toString(), base64)
+                } catch (e: Exception) {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Failed to load image")
+                    }
+                }
+            }
+        }
+    }
 
     LaunchedEffect(messageText) {
         chatViewModel.setUserTyping(messageText.isNotEmpty())
@@ -426,8 +487,11 @@ fun ChatScreen(
                         verticalAlignment = Alignment.Bottom,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // Attachment button
                         Surface(
-                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                imagePickerLauncher.launch("image/*")
+                            },
                             shape = RoundedCornerShape(28.dp),
                             color = if (isDark) {
                                 Color(0xFF2D2D2D).copy(alpha = 0.8f)
@@ -442,49 +506,136 @@ fun ChatScreen(
                                     Color.Black.copy(alpha = 0.1f)
                                 }
                             ),
-                            shadowElevation = 4.dp
+                            enabled = !chatUiState.isLoading && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium),
+                            modifier = Modifier.size(56.dp)
                         ) {
-                            OutlinedTextField(
-                                value = messageText,
-                                onValueChange = {
-                                    messageText = it
-                                    chatViewModel.setUserTyping(it.isNotEmpty())
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = {
-                                    Text(
-                                        "Ask me anything...",
-                                        color = if (isDark) {
-                                            Color.White.copy(alpha = 0.5f)
-                                        } else {
-                                            Color.Black.copy(alpha = 0.5f)
-                                        }
-                                    )
-                                },
-                                shape = RoundedCornerShape(28.dp),
-                                maxLines = 4,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = if (isDark) Color.White else Color.Black,
-                                    unfocusedTextColor = if (isDark) Color.White else Color.Black,
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedBorderColor = Color.Transparent,
-                                    unfocusedBorderColor = Color.Transparent,
-                                    cursorColor = Color(0xFF4285F4)
-                                ),
-                                enabled = !chatUiState.isLoading && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium) && !chatUiState.isLoadingCounter
-                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AddPhotoAlternate,
+                                    contentDescription = "Add Image",
+                                    tint = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
 
+                        // Input field with image preview
+                        Column(modifier = Modifier.weight(1f)) {
+                            // Image preview if selected
+                            chatUiState.selectedImageUri?.let { imageUri ->
+                                Box(
+                                    modifier = Modifier
+                                        .padding(bottom = 8.dp)
+                                        .size(80.dp)
+                                ) {
+                                    AsyncImage(
+                                        model = imageUri,
+                                        contentDescription = "Selected image",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(12.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    // Remove button
+                                    Surface(
+                                        onClick = { chatViewModel.clearSelectedImage() },
+                                        shape = CircleShape,
+                                        color = Color.Black.copy(alpha = 0.6f),
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(24.dp)
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Remove",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(28.dp),
+                                color = if (isDark) {
+                                    Color(0xFF2D2D2D).copy(alpha = 0.8f)
+                                } else {
+                                    Color.White.copy(alpha = 0.9f)
+                                },
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    color = if (isDark) {
+                                        Color.White.copy(alpha = 0.1f)
+                                    } else {
+                                        Color.Black.copy(alpha = 0.1f)
+                                    }
+                                ),
+                                shadowElevation = 4.dp
+                            ) {
+                                OutlinedTextField(
+                                    value = messageText,
+                                    onValueChange = {
+                                        messageText = it
+                                        chatViewModel.setUserTyping(it.isNotEmpty())
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = {
+                                        Text(
+                                            if (chatUiState.selectedImageUri != null) "Describe what to analyze..." else "Ask me anything...",
+                                            color = if (isDark) {
+                                                Color.White.copy(alpha = 0.5f)
+                                            } else {
+                                                Color.Black.copy(alpha = 0.5f)
+                                            }
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(28.dp),
+                                    maxLines = 4,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = if (isDark) Color.White else Color.Black,
+                                        unfocusedTextColor = if (isDark) Color.White else Color.Black,
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        cursorColor = Color(0xFF4285F4)
+                                    ),
+                                    enabled = !chatUiState.isLoading && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium) && !chatUiState.isLoadingCounter
+                                )
+                            }
+                        }
+
+                        // Send button
+                        val hasContent = messageText.isNotBlank() || chatUiState.selectedImageUri != null
                         Surface(
                             onClick = {
                                 if (chatUiState.isStreaming) {
                                     chatViewModel.stopStreaming()
                                 } else {
-                                    if (messageText.isNotBlank() && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium)) {
+                                    if (hasContent && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium)) {
                                         authUiState.user?.uid?.let { userId ->
-                                            chatViewModel.sendMessage(userId, messageText.trim())
-                                            messageText = ""
+                                            // Check if we have an image
+                                            val imageBase64 = chatUiState.selectedImageBase64
+                                            val imageUri = chatUiState.selectedImageUri
+                                            
+                                            if (imageBase64 != null && imageUri != null) {
+                                                // Send as vision message
+                                                val prompt = if (messageText.isBlank()) "What's in this image?" else messageText.trim()
+                                                chatViewModel.sendImageMessage(userId, prompt, imageBase64, imageUri)
+                                                messageText = ""
+                                            } else if (messageText.isNotBlank()) {
+                                                // Regular text message
+                                                chatViewModel.sendMessage(userId, messageText.trim())
+                                                messageText = ""
+                                            }
                                             chatViewModel.setUserTyping(false)
                                         }
                                     } else if (chatUiState.remainingRequests == 0 && !premiumStatus.isPremium) {
@@ -496,7 +647,7 @@ fun ChatScreen(
                             shape = RoundedCornerShape(28.dp),
                             color = if (chatUiState.isStreaming) {
                                 Color(0xFFEA4335)
-                            } else if (messageText.isNotBlank() && !chatUiState.isLoading && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium) && !chatUiState.isLoadingCounter) {
+                            } else if (hasContent && !chatUiState.isLoading && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium) && !chatUiState.isLoadingCounter) {
                                 Color(0xFF4285F4)
                             } else {
                                 if (isDark) {
@@ -505,7 +656,7 @@ fun ChatScreen(
                                     Color(0xFFCCCCCC).copy(alpha = 0.5f)
                                 }
                             },
-                            enabled = chatUiState.isStreaming || (messageText.isNotBlank() && !chatUiState.isLoading && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium) && !chatUiState.isLoadingCounter),
+                            enabled = chatUiState.isStreaming || (hasContent && !chatUiState.isLoading && (chatUiState.remainingRequests > 0 || premiumStatus.isPremium) && !chatUiState.isLoadingCounter),
                             modifier = Modifier.size(56.dp)
                         ) {
                             Box(
@@ -523,7 +674,7 @@ fun ChatScreen(
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.Send,
                                         contentDescription = "Send",
-                                        tint = if (messageText.isNotBlank() && !chatUiState.isLoading) {
+                                        tint = if (hasContent && !chatUiState.isLoading) {
                                             Color.White
                                         } else {
                                             Color.White.copy(alpha = 0.3f)
