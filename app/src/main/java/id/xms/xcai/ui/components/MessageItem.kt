@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.text.selection.SelectionContainer
 import id.xms.xcai.data.local.ChatEntity
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -555,58 +556,60 @@ private fun AIMessageWithContent(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Main content - clean layout without avatar
-        Column(modifier = Modifier.fillMaxWidth()) {
-            content.forEach { item ->
-                when (item) {
-                    is MessageContent.Text -> {
-                        Text(
-                            text = parseStyledText(item.text),
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontSize = 15.sp,
-                                lineHeight = 24.sp,
-                                letterSpacing = 0.sp
-                            ),
-                            color = if (isDark) {
-                                Color.White.copy(alpha = 0.92f)
-                            } else {
-                                Color(0xFF1F1F1F)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        )
-                    }
-                    is MessageContent.Heading -> {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        HeadingText(text = item.text, level = item.level, isDark = isDark)
-                    }
-                    is MessageContent.BulletList -> {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        BulletListText(items = item.items, isDark = isDark)
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-                    is MessageContent.Table -> {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        TableContent(
-                            headers = item.headers,
-                            rows = item.rows,
-                            isDark = isDark
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                    is MessageContent.CodeBlock -> {
-                        if (item.language == "inline") {
-                            InlineCodeText(code = item.code, isDark = isDark)
-                        } else {
+        // Main content - clean layout without avatar (with text selection support)
+        SelectionContainer {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                content.forEach { item ->
+                    when (item) {
+                        is MessageContent.Text -> {
+                            Text(
+                                text = parseStyledText(item.text),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = 15.sp,
+                                    lineHeight = 24.sp,
+                                    letterSpacing = 0.sp
+                                ),
+                                color = if (isDark) {
+                                    Color.White.copy(alpha = 0.92f)
+                                } else {
+                                    Color(0xFF1F1F1F)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            )
+                        }
+                        is MessageContent.Heading -> {
                             Spacer(modifier = Modifier.height(12.dp))
-                            CodeBlockCard(
-                                isStreaming = isStreaming,
-                                code = item.code,
-                                language = item.language,
+                            HeadingText(text = item.text, level = item.level, isDark = isDark)
+                        }
+                        is MessageContent.BulletList -> {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            BulletListText(items = item.items, isDark = isDark)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        is MessageContent.Table -> {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            TableContent(
+                                headers = item.headers,
+                                rows = item.rows,
                                 isDark = isDark
                             )
                             Spacer(modifier = Modifier.height(12.dp))
+                        }
+                        is MessageContent.CodeBlock -> {
+                            if (item.language == "inline") {
+                                InlineCodeText(code = item.code, isDark = isDark)
+                            } else {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                CodeBlockCard(
+                                    isStreaming = isStreaming,
+                                    code = item.code,
+                                    language = item.language,
+                                    isDark = isDark
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
                         }
                     }
                 }
