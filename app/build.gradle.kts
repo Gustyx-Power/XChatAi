@@ -130,6 +130,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
     implementation("com.google.accompanist:accompanist-pager:0.32.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.32.0")
+    
+    // PDF Reader
+    implementation("com.itextpdf:itext7-core:7.2.5")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
