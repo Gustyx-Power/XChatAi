@@ -32,8 +32,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -43,9 +45,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -54,6 +58,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -73,6 +78,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import id.xms.xcai.ui.components.AIThinkingIndicator
 import id.xms.xcai.ui.components.AITypingIndicator
@@ -85,6 +91,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,41 +123,28 @@ fun ChatScreen(
     ) { uri: Uri? ->
         uri?.let { imageUri ->
             scope.launch {
-                try {
-                    val base64 = withContext(Dispatchers.IO) {
-                        val inputStream = context.contentResolver.openInputStream(imageUri)
-                        val bitmap = BitmapFactory.decodeStream(inputStream)
-                        inputStream?.close()
-                        
-                        // Resize if too large (max 1024px on largest side)
-                        val maxSize = 1024
-                        val scale = minOf(
-                            maxSize.toFloat() / bitmap.width,
-                            maxSize.toFloat() / bitmap.height,
-                            1f
-                        )
-                        val scaledBitmap = if (scale < 1f) {
-                            Bitmap.createScaledBitmap(
-                                bitmap,
-                                (bitmap.width * scale).toInt(),
-                                (bitmap.height * scale).toInt(),
-                                true
-                            )
-                        } else bitmap
-                        
-                        val outputStream = ByteArrayOutputStream()
-                        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
-                        Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
-                    }
-                    chatViewModel.setSelectedImage(imageUri.toString(), base64)
-                } catch (e: Exception) {
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Failed to load image")
-                    }
-                }
+                processImageUri(context, imageUri, chatViewModel, snackbarHostState)
             }
         }
     }
+
+    // Camera photo URI
+    var cameraPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && cameraPhotoUri != null) {
+            scope.launch {
+                processImageUri(context, cameraPhotoUri!!, chatViewModel, snackbarHostState)
+            }
+        }
+    }
+
+    // Bottom sheet state for image source picker
+    var showImageSourceSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     LaunchedEffect(messageText) {
         chatViewModel.setUserTyping(messageText.isNotEmpty())
@@ -419,18 +413,7 @@ fun ChatScreen(
                                         messageIndex == chatUiState.messages.indexOfLast { it.isUser }
 
                                 MessageItem(
-                                    message = message,
-                                    isLastUserMessage = isLastUserMessage,
-                                    onEditMessage = { messageId, newText ->
-                                        authUiState.user?.uid?.let { userId ->
-                                            chatViewModel.editMessageAndRegenerate(userId, messageId, newText)
-                                        }
-                                    },
-                                    onRegenerateResponse = { _ ->
-                                        authUiState.user?.uid?.let { userId ->
-                                            chatViewModel.regenerateResponse(userId)
-                                        }
-                                    }
+                                    message = message
                                 )
                             }
 
@@ -490,7 +473,7 @@ fun ChatScreen(
                         // Attachment button
                         Surface(
                             onClick = {
-                                imagePickerLauncher.launch("image/*")
+                                showImageSourceSheet = true
                             },
                             shape = RoundedCornerShape(28.dp),
                             color = if (isDark) {
@@ -767,5 +750,156 @@ fun ChatScreen(
                 }
             }
         )
+    }
+
+    // Bottom sheet for image source selection
+    if (showImageSourceSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showImageSourceSheet = false },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "Select Image Source",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                // Gallery option
+                Surface(
+                    onClick = {
+                        showImageSourceSheet = false
+                        imagePickerLauncher.launch("image/*")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = "Gallery",
+                            modifier = Modifier.size(28.dp),
+                            tint = Color(0xFF4285F4)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Gallery",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "Choose from your photos",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Camera option
+                Surface(
+                    onClick = {
+                        showImageSourceSheet = false
+                        // Create temp file for camera
+                        val photoFile = File.createTempFile(
+                            "IMG_${System.currentTimeMillis()}_",
+                            ".jpg",
+                            context.cacheDir
+                        )
+                        cameraPhotoUri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            photoFile
+                        )
+                        cameraLauncher.launch(cameraPhotoUri!!)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Camera",
+                            modifier = Modifier.size(28.dp),
+                            tint = Color(0xFF34A853)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Camera",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "Take a new photo",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+// Helper function to process image URI
+private suspend fun processImageUri(
+    context: android.content.Context,
+    imageUri: Uri,
+    chatViewModel: ChatViewModel,
+    snackbarHostState: SnackbarHostState
+) {
+    try {
+        val base64 = withContext(Dispatchers.IO) {
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+            
+            // Resize if too large (max 1024px on largest side)
+            val maxSize = 1024
+            val scale = minOf(
+                maxSize.toFloat() / bitmap.width,
+                maxSize.toFloat() / bitmap.height,
+                1f
+            )
+            val scaledBitmap = if (scale < 1f) {
+                Bitmap.createScaledBitmap(
+                    bitmap,
+                    (bitmap.width * scale).toInt(),
+                    (bitmap.height * scale).toInt(),
+                    true
+                )
+            } else bitmap
+            
+            val outputStream = ByteArrayOutputStream()
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+            Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
+        }
+        chatViewModel.setSelectedImage(imageUri.toString(), base64)
+    } catch (e: Exception) {
+        snackbarHostState.showSnackbar("Failed to load image")
     }
 }
