@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">XChatAi</string>
+    
+    <!-- Authentication -->
+    <string name="sign_in_with_google">Masuk dengan Google</string>
+    <string name="sign_out">Keluar</string>
+    
+    <!-- Chat -->
+    <string name="send">Kirim</string>
+    <string name="type_message">Ketik pesan…</string>
+    <string name="ask_me_anything">Tanyakan apa saja…</string>
+    <string name="describe_image">Jelaskan apa yang ingin dianalisis…</string>
+    <string name="new_chat">Obrolan Baru</string>
+    <string name="history">Riwayat</string>
+    <string name="delete">Hapus</string>
+    <string name="typing">Mengetik…</string>
+    <string name="thinking">Berpikir…</string>
+    <string name="stop">Berhenti</string>
+    <string name="copy">Salin</string>
+    <string name="copied">Disalin ke clipboard</string>
+    
+    <!-- Image Picker -->
+    <string name="select_image_source">Pilih Sumber Gambar</string>
+    <string name="gallery">Galeri</string>
+    <string name="camera">Kamera</string>
+    <string name="choose_from_photos">Pilih dari foto Anda</string>
+    <string name="take_new_photo">Ambil foto baru</string>
+    <string name="add_image">Tambah Gambar</string>
+    <string name="remove_image">Hapus</string>
+    <string name="failed_load_image">Gagal memuat gambar</string>
+    
+    <!-- Settings -->
+    <string name="settings">Pengaturan</string>
+    <string name="back">Kembali</string>
+    
+    <!-- Response Mode -->
+    <string name="response_mode">Mode Respons</string>
+    <string name="response_mode_desc">Pilih cara AI merespons pertanyaan Anda</string>
+    
+    <!-- AI Model -->
+    <string name="ai_model">Model AI</string>
+    <string name="ai_model_desc">Pilih model AI untuk chat</string>
+    
+    <!-- Data Management -->
+    <string name="data_management">Manajemen Data</string>
+    <string name="data_management_desc">Cadangkan dan pulihkan riwayat chat Anda</string>
+    <string name="backup">Cadangkan</string>
+    <string name="backup_now">Cadangkan Sekarang</string>
+    <string name="backup_desc">Simpan percakapan ke penyimpanan perangkat</string>
+    <string name="backup_success">Cadangan disimpan ke: %1$s</string>
+    <string name="backup_failed">Cadangan gagal: %1$s</string>
+    <string name="restore">Pulihkan</string>
+    <string name="restore_backup">Pulihkan Cadangan</string>
+    <string name="restore_desc">Pulihkan percakapan dari file cadangan</string>
+    <string name="restore_confirm">Ini akan memulihkan percakapan dari file cadangan. Data saat ini akan digabungkan dengan data cadangan. Lanjutkan?</string>
+    <string name="restore_success">Cadangan berhasil dipulihkan!</string>
+    <string name="restore_failed">Pemulihan gagal: %1$s</string>
+    <string name="cancel">Batal</string>
+    
+    <!-- About -->
+    <string name="about">Tentang</string>
+    <string name="app_version">Versi Aplikasi</string>
+    <string name="developer">Pengembang</string>
+    <string name="developer_name">Gusti Aditya Muzaky</string>
+    
+    <!-- Rate Limit -->
+    <string name="rate_limit_title">Batas Permintaan Tercapai</string>
+    <string name="rate_limit_message">Anda telah mencapai maksimum 20 permintaan per 30 menit. Harap tunggu sebelum mengirim pesan lagi.</string>
+    <string name="low_quota_title">Peringatan Kuota Rendah</string>
+    <string name="low_quota_message">Anda hanya memiliki %1$d permintaan tersisa.</string>
+    <string name="upgrade_premium">Pertimbangkan untuk upgrade ke Premium untuk 100 permintaan!</string>
+    <string name="got_it">Mengerti</string>
+    <string name="understood">Paham</string>
+    
+    <!-- Greetings -->
+    <string name="hello_user">Halo, %1$s</string>
+    <string name="premium_access">✨ Anda memiliki akses premium!</string>
+</resources>

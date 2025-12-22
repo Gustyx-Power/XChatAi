@@ -18,9 +18,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import id.xms.xcai.BuildConfig
+import id.xms.xcai.R
 import id.xms.xcai.data.model.GroqModel
 import id.xms.xcai.data.model.ResponseMode
 import id.xms.xcai.ui.viewmodel.SettingsViewModel
@@ -280,23 +283,23 @@ fun SettingsScreen(
                         Column {
                             SectionHeader(
                                 icon = Icons.Default.Info,
-                                text = "About",
+                                text = stringResource(R.string.about),
                                 isDark = isDark
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
 
                             InfoItem(
-                                label = "App Version",
-                                value = "1.1",
+                                label = stringResource(R.string.app_version),
+                                value = BuildConfig.VERSION_NAME,
                                 isDark = isDark
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
 
                             InfoItem(
-                                label = "Developer",
-                                value = "Gusti Aditya Muzaky",
+                                label = stringResource(R.string.developer),
+                                value = stringResource(R.string.developer_name),
                                 isDark = isDark
                             )
                         }
