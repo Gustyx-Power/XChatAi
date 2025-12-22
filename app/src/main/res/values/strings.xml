@@ -108,4 +108,19 @@
     <string name="welcome">Welcome</string>
     <string name="welcome_back">Welcome back!</string>
     <string name="continue_with_google">Continue with Google</string>
+    
+    <!-- Splash Screen -->
+    <string name="splash_tagline">More Faster AI Chat Experience</string>
+    
+    <!-- Premium -->
+    <string name="upgrade_to_premium">Upgrade to Premium</string>
+    <string name="choose_plan">Choose your premium plan:</string>
+    <string name="premium">Premium</string>
+    <string name="premium_plus">Premium Plus</string>
+    <string name="requests_per_30min">100 Requests / 30 min</string>
+    <string name="unlimited_requests">Unlimited Requests</string>
+    <string name="per_month">$1 / month</string>
+    <string name="lifetime">$4 Lifetime</string>
+    <string name="contact_telegram">Contact via Telegram for payment:</string>
+    <string name="open_telegram">Open Telegram</string>
 </resources>

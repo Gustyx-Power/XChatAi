@@ -330,7 +330,7 @@ private fun ProfileSection(
                         Icon(Icons.Default.Diamond, null, modifier = Modifier.size(18.dp), tint = Color(0xFF1A1A1A))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Upgrade to Premium",
+                            text = stringResource(R.string.upgrade_to_premium),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1A1A1A)
@@ -611,14 +611,14 @@ private fun PremiumDialog(onDismiss: () -> Unit, onContactTelegram: () -> Unit) 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Diamond, null, tint = Color(0xFFFFD700), modifier = Modifier.size(48.dp)) },
-        title = { Text("Upgrade to Premium", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) },
+        title = { Text(stringResource(R.string.upgrade_to_premium), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Choose your premium plan:", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.choose_plan), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
 
                 // Premium Plan
                 Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF4285F4).copy(alpha = 0.2f))) {
@@ -626,12 +626,12 @@ private fun PremiumDialog(onDismiss: () -> Unit, onContactTelegram: () -> Unit) 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Star, null, tint = Color(0xFF4285F4), modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Premium", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.premium), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("100 Requests / 30 min", style = MaterialTheme.typography.bodySmall, color = Color.Black.copy(alpha = 0.7f))
+                        Text(stringResource(R.string.requests_per_30min), style = MaterialTheme.typography.bodySmall, color = Color.Black.copy(alpha = 0.7f))
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("$1 / month", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFF4285F4))
+                        Text(stringResource(R.string.per_month), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFF4285F4))
                     }
                 }
 
@@ -641,21 +641,21 @@ private fun PremiumDialog(onDismiss: () -> Unit, onContactTelegram: () -> Unit) 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Diamond, null, tint = Color(0xFFFFD700), modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Premium Plus", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.premium_plus), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Unlimited Requests", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFFFFD700))
+                        Text(stringResource(R.string.unlimited_requests), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFFFFD700))
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("$4 Lifetime", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFFFFD700))
+                        Text(stringResource(R.string.lifetime), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFFFFD700))
                     }
                 }
 
                 HorizontalDivider()
-                Text("Contact via Telegram for payment:", style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.contact_telegram), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
                 Text("t.me/GustyxPower", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF0088CC))
             }
         },
-        confirmButton = { Button(onClick = onContactTelegram, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088CC))) { Text("Open Telegram") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { Button(onClick = onContactTelegram, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088CC))) { Text(stringResource(R.string.open_telegram)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }

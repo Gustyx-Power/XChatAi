@@ -108,4 +108,19 @@
     <string name="welcome">Selamat Datang</string>
     <string name="welcome_back">Selamat datang kembali!</string>
     <string name="continue_with_google">Lanjutkan dengan Google</string>
+    
+    <!-- Splash Screen -->
+    <string name="splash_tagline">Pengalaman Chat AI Lebih Cepat</string>
+    
+    <!-- Premium -->
+    <string name="upgrade_to_premium">Upgrade ke Premium</string>
+    <string name="choose_plan">Pilih paket premium Anda:</string>
+    <string name="premium">Premium</string>
+    <string name="premium_plus">Premium Plus</string>
+    <string name="requests_per_30min">100 Permintaan / 30 menit</string>
+    <string name="unlimited_requests">Permintaan Tak Terbatas</string>
+    <string name="per_month">$1 / bulan</string>
+    <string name="lifetime">$4 Seumur Hidup</string>
+    <string name="contact_telegram">Hubungi via Telegram untuk pembayaran:</string>
+    <string name="open_telegram">Buka Telegram</string>
 </resources>
