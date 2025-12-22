@@ -16,6 +16,7 @@ import id.xms.xcai.data.preferences.UserPreferences
 import id.xms.xcai.data.repository.ChatRepository
 import id.xms.xcai.data.repository.PremiumManager
 import id.xms.xcai.data.repository.PremiumStatus
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -264,6 +265,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         Log.d("ChatViewModel", "Messages loaded: ${chats.size}")
                     }
                 }
+            } catch (e: CancellationException) {
+                // Normal cancellation when switching conversations, don't show error
+                Log.d("ChatViewModel", "Chat collection cancelled (normal behavior)")
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "Error loading chats: ${e.message}")
                 _chatUiState.value = _chatUiState.value.copy(
@@ -373,6 +377,92 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 )
 
                 loadRemainingRequests(userId)
+            }
+        }
+    }
+
+    /**
+     * Send message with document context.
+     * Display only file indicator in chat, but send full content to AI.
+     */
+    fun sendDocumentMessage(userId: String, userQuestion: String, documentName: String, documentContent: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("ChatViewModel", "=== SEND DOCUMENT MESSAGE ===")
+                Log.d("ChatViewModel", "Document: $documentName")
+                Log.d("ChatViewModel", "Question: $userQuestion")
+
+                val responseMode = _chatUiState.value.currentResponseMode
+
+                _chatUiState.value = _chatUiState.value.copy(
+                    isLoading = true,
+                    error = null,
+                    isThinking = false
+                )
+
+                var conversationId = _chatUiState.value.currentConversationId
+
+                if (conversationId == null) {
+                    conversationId = repository.createConversation(
+                        userId = userId,
+                        title = "📄 $documentName"
+                    )
+                    _chatUiState.value = _chatUiState.value.copy(currentConversationId = conversationId)
+                    loadChats(conversationId)
+                }
+
+                // Display message: only show file indicator + question
+                val displayMessage = "📄 $documentName\n\n$userQuestion"
+                
+                // AI context: include full document content
+                val aiContext = "Here is the content of the file '$documentName':\n\n```\n$documentContent\n```\n\nUser's question: $userQuestion"
+
+                // Save display message to chat
+                repository.insertChat(
+                    ChatEntity(
+                        conversationId = conversationId,
+                        message = displayMessage,
+                        isUser = true
+                    )
+                )
+
+                _chatUiState.value = _chatUiState.value.copy(isThinking = true)
+
+                val maxRequests = premiumManager.getMaxRequests(_premiumStatus.value)
+
+                // Send AI context (with full document) to API
+                val result = repository.sendMessageToGroq(
+                    conversationId = conversationId,
+                    userMessage = aiContext,
+                    userId = userId,
+                    maxRequests = maxRequests,
+                    systemPrompt = responseMode.systemPrompt
+                )
+
+                result.onSuccess { aiResponse ->
+                    _chatUiState.value = _chatUiState.value.copy(
+                        isThinking = false,
+                        isLoading = false
+                    )
+                    startTypewriterEffect(conversationId, aiResponse)
+                    loadRemainingRequests(userId)
+                }.onFailure { exception ->
+                    Log.e("ChatViewModel", "API failed: ${exception.message}")
+                    _chatUiState.value = _chatUiState.value.copy(
+                        isLoading = false,
+                        isThinking = false,
+                        error = exception.message ?: "An error occurred"
+                    )
+                    loadRemainingRequests(userId)
+                }
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error in sendDocumentMessage: ${e.message}", e)
+                _chatUiState.value = _chatUiState.value.copy(
+                    isLoading = false,
+                    isThinking = false,
+                    error = "An unexpected error occurred."
+                )
             }
         }
     }
