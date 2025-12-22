@@ -41,9 +41,7 @@ if [ -z "$SKIP_INSTALL" ]; then
 fi
 
 echo "Membersihkan cache build..."
-rm -rf app/build/
-rm -rf build/
-rm -rf .gradle/
+
 
 echo "Membersihkan cache Gradle..."
 ./gradlew clean
