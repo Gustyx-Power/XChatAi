@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseUser
+import id.xms.xcai.R
 import id.xms.xcai.data.local.ConversationEntity
 import id.xms.xcai.data.repository.PremiumStatus
 import java.text.SimpleDateFormat
@@ -125,13 +127,13 @@ fun DrawerContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "History",
+                    text = stringResource(R.string.history),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = if (isDark) Color.White else Color.Black
                 )
                 Text(
-                    text = "${filteredConversations.size} chats",
+                    text = stringResource(R.string.chats_count, filteredConversations.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
                 )
@@ -345,14 +347,14 @@ private fun ProfileSection(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ActionButton(
                     icon = Icons.Default.Settings,
-                    label = "Settings",
+                    label = stringResource(R.string.settings),
                     isDark = isDark,
                     onClick = onSettingsClick,
                     modifier = Modifier.weight(1f)
                 )
                 ActionButton(
                     icon = Icons.Default.ExitToApp,
-                    label = "Logout",
+                    label = stringResource(R.string.sign_out),
                     isDark = isDark,
                     isError = true,
                     onClick = onLogout,
@@ -432,7 +434,7 @@ private fun SearchBar(
                 decorationBox = { innerTextField ->
                     if (searchQuery.isEmpty()) {
                         Text(
-                            "Search conversations...",
+                            stringResource(R.string.search_conversations),
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (isDark) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f)
                         )
@@ -468,9 +470,9 @@ private fun NewChatButton(isPremium: Boolean, isDark: Boolean, onClick: () -> Un
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text("New Chat", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(R.string.new_chat), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(
-                    if (isPremium) "✨ Premium access" else "Start a conversation",
+                    if (isPremium) stringResource(R.string.premium_access) else stringResource(R.string.start_a_conversation),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -559,12 +561,12 @@ private fun EmptyState(hasSearch: Boolean, isDark: Boolean) {
                 tint = if (isDark) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f)
             )
             Text(
-                if (hasSearch) "No results found" else "No conversations yet",
+                if (hasSearch) stringResource(R.string.no_results) else stringResource(R.string.no_conversations),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (isDark) Color.White else Color.Black
             )
             Text(
-                if (hasSearch) "Try a different search" else "Start a new chat to begin",
+                if (hasSearch) stringResource(R.string.try_different_search) else stringResource(R.string.start_conversation),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f)
             )
@@ -577,10 +579,10 @@ private fun DeleteDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Delete, null, tint = Color(0xFFEA4335)) },
-        title = { Text("Delete Conversation?", fontWeight = FontWeight.Bold) },
-        text = { Text("This will permanently delete \"$title\" and all its messages.") },
-        confirmButton = { Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335))) { Text("Delete") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        title = { Text(stringResource(R.string.delete_conversation), fontWeight = FontWeight.Bold) },
+        text = { Text(stringResource(R.string.delete_confirm, title)) },
+        confirmButton = { Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335))) { Text(stringResource(R.string.delete)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
@@ -589,18 +591,18 @@ private fun RenameDialog(currentName: String, onNameChange: (String) -> Unit, on
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Edit, null, tint = Color(0xFF4285F4)) },
-        title = { Text("Rename Conversation", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.rename_conversation), fontWeight = FontWeight.Bold) },
         text = {
             TextField(
                 value = currentName,
                 onValueChange = onNameChange,
-                label = { Text("New name") },
+                label = { Text(stringResource(R.string.new_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
         },
-        confirmButton = { Button(onClick = onConfirm, enabled = currentName.isNotBlank()) { Text("Rename") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { Button(onClick = onConfirm, enabled = currentName.isNotBlank()) { Text(stringResource(R.string.rename)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 

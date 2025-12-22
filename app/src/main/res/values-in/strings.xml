@@ -6,6 +6,7 @@
     <!-- Authentication -->
     <string name="sign_in_with_google">Masuk dengan Google</string>
     <string name="sign_out">Keluar</string>
+    <string name="signing_in">Sedang masuk…</string>
     
     <!-- Chat -->
     <string name="send">Kirim</string>
@@ -14,12 +15,26 @@
     <string name="describe_image">Jelaskan apa yang ingin dianalisis…</string>
     <string name="new_chat">Obrolan Baru</string>
     <string name="history">Riwayat</string>
+    <string name="conversations">Percakapan</string>
+    <string name="no_conversations">Belum ada percakapan</string>
+    <string name="start_conversation">Mulai obrolan baru</string>
+    <string name="start_a_conversation">Mulai percakapan</string>
+    <string name="search_conversations">Cari percakapan…</string>
+    <string name="no_results">Tidak ada hasil</string>
+    <string name="try_different_search">Coba pencarian lain</string>
+    <string name="chats_count">%1$d obrolan</string>
     <string name="delete">Hapus</string>
+    <string name="delete_conversation">Hapus Percakapan?</string>
+    <string name="delete_confirm">Ini akan menghapus \"%1$s\" dan semua pesannya secara permanen.</string>
+    <string name="rename">Ubah Nama</string>
+    <string name="rename_conversation">Ubah Nama Percakapan</string>
+    <string name="new_name">Nama baru</string>
     <string name="typing">Mengetik…</string>
     <string name="thinking">Berpikir…</string>
     <string name="stop">Berhenti</string>
     <string name="copy">Salin</string>
     <string name="copied">Disalin ke clipboard</string>
+    <string name="menu">Menu</string>
     
     <!-- Image Picker -->
     <string name="select_image_source">Pilih Sumber Gambar</string>
@@ -77,4 +92,20 @@
     <!-- Greetings -->
     <string name="hello_user">Halo, %1$s</string>
     <string name="premium_access">✨ Anda memiliki akses premium!</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Asisten AI Pintar</string>
+    <string name="onboarding_desc_1">Dapatkan jawaban instan dan bantuan untuk pertanyaan apa pun menggunakan teknologi AI canggih</string>
+    <string name="onboarding_title_2">Analisis Gambar</string>
+    <string name="onboarding_desc_2">Unggah gambar dan biarkan AI menganalisis dan menjelaskan apa yang dilihatnya</string>
+    <string name="onboarding_title_3">Berbagai Model AI</string>
+    <string name="onboarding_desc_3">Pilih dari berbagai model AI yang sesuai dengan kebutuhan Anda</string>
+    <string name="get_started">Mulai</string>
+    <string name="next">Lanjut</string>
+    <string name="skip">Lewati</string>
+    
+    <!-- Login -->
+    <string name="welcome">Selamat Datang</string>
+    <string name="welcome_back">Selamat datang kembali!</string>
+    <string name="continue_with_google">Lanjutkan dengan Google</string>
 </resources>

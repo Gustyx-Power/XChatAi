@@ -6,6 +6,7 @@
     <!-- Authentication -->
     <string name="sign_in_with_google">Sign in with Google</string>
     <string name="sign_out">Sign Out</string>
+    <string name="signing_in">Signing in…</string>
     
     <!-- Chat -->
     <string name="send">Send</string>
@@ -14,12 +15,26 @@
     <string name="describe_image">Describe what to analyze…</string>
     <string name="new_chat">New Chat</string>
     <string name="history">History</string>
+    <string name="conversations">Conversations</string>
+    <string name="no_conversations">No conversations yet</string>
+    <string name="start_conversation">Start a new chat to begin</string>
+    <string name="start_a_conversation">Start a conversation</string>
+    <string name="search_conversations">Search conversations…</string>
+    <string name="no_results">No results found</string>
+    <string name="try_different_search">Try a different search</string>
+    <string name="chats_count">%1$d chats</string>
     <string name="delete">Delete</string>
+    <string name="delete_conversation">Delete Conversation?</string>
+    <string name="delete_confirm">This will permanently delete \"%1$s\" and all its messages.</string>
+    <string name="rename">Rename</string>
+    <string name="rename_conversation">Rename Conversation</string>
+    <string name="new_name">New name</string>
     <string name="typing">Typing…</string>
     <string name="thinking">Thinking…</string>
     <string name="stop">Stop</string>
     <string name="copy">Copy</string>
     <string name="copied">Copied to clipboard</string>
+    <string name="menu">Menu</string>
     
     <!-- Image Picker -->
     <string name="select_image_source">Select Image Source</string>
@@ -77,4 +92,20 @@
     <!-- Greetings -->
     <string name="hello_user">Hello, %1$s</string>
     <string name="premium_access">✨ You have premium access!</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Smart AI Assistant</string>
+    <string name="onboarding_desc_1">Get instant answers and help with any question using advanced AI technology</string>
+    <string name="onboarding_title_2">Image Analysis</string>
+    <string name="onboarding_desc_2">Upload images and let AI analyze and describe what it sees</string>
+    <string name="onboarding_title_3">Multiple AI Models</string>
+    <string name="onboarding_desc_3">Choose from various AI models to suit your needs</string>
+    <string name="get_started">Get Started</string>
+    <string name="next">Next</string>
+    <string name="skip">Skip</string>
+    
+    <!-- Login -->
+    <string name="welcome">Welcome</string>
+    <string name="welcome_back">Welcome back!</string>
+    <string name="continue_with_google">Continue with Google</string>
 </resources>
