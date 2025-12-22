@@ -82,7 +82,7 @@ fun SettingsScreen(
                     TopAppBar(
                         title = {
                             Text(
-                                "Settings",
+                                stringResource(R.string.settings),
                                 fontWeight = FontWeight.Bold,
                                 color = if (isDark) Color.White else Color.Black
                             )
@@ -91,7 +91,7 @@ fun SettingsScreen(
                             IconButton(onClick = onNavigateBack) {
                                 Icon(
                                     Icons.AutoMirrored.Filled.ArrowBack,
-                                    "Back",
+                                    stringResource(R.string.back),
                                     tint = if (isDark) Color.White else Color.Black
                                 )
                             }
@@ -117,14 +117,14 @@ fun SettingsScreen(
                         Column {
                             SectionHeader(
                                 icon = Icons.Default.FormatListBulleted,
-                                text = "Response Mode",
+                                text = stringResource(R.string.response_mode),
                                 isDark = isDark
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "Choose how AI responds to your queries",
+                                text = stringResource(R.string.response_mode_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isDark) {
                                     Color.White.copy(alpha = 0.7f)
@@ -165,14 +165,14 @@ fun SettingsScreen(
                         Column {
                             SectionHeader(
                                 icon = Icons.Default.Psychology,
-                                text = "AI Model",
+                                text = stringResource(R.string.ai_model),
                                 isDark = isDark
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "Select the AI model to use for chat",
+                                text = stringResource(R.string.ai_model_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isDark) {
                                     Color.White.copy(alpha = 0.7f)
@@ -213,14 +213,14 @@ fun SettingsScreen(
                         Column {
                             SectionHeader(
                                 icon = Icons.Default.Storage,
-                                text = "Data Management",
+                                text = stringResource(R.string.data_management),
                                 isDark = isDark
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "Backup and restore your chat history",
+                                text = stringResource(R.string.data_management_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isDark) {
                                     Color.White.copy(alpha = 0.7f)
@@ -235,8 +235,8 @@ fun SettingsScreen(
                             // Backup Button
                             DataManagementItem(
                                 icon = Icons.Default.Backup,
-                                title = "Backup Now",
-                                subtitle = "Save your conversations to device storage",
+                                title = stringResource(R.string.backup_now),
+                                subtitle = stringResource(R.string.backup_desc),
                                 isDark = isDark,
                                 isLoading = isBackupInProgress,
                                 onClick = {
@@ -247,9 +247,9 @@ fun SettingsScreen(
                                         isBackupInProgress = false
 
                                         result.onSuccess { path ->
-                                            snackbarHostState.showSnackbar("Backup saved to: $path")
+                                            snackbarHostState.showSnackbar(context.getString(R.string.backup_success, path))
                                         }.onFailure { error ->
-                                            snackbarHostState.showSnackbar("Backup failed: ${error.message}")
+                                            snackbarHostState.showSnackbar(context.getString(R.string.backup_failed, error.message))
                                         }
                                     }
                                 }
@@ -267,8 +267,8 @@ fun SettingsScreen(
                             // Restore Button
                             DataManagementItem(
                                 icon = Icons.Default.RestorePage,
-                                title = "Restore Backup",
-                                subtitle = "Restore conversations from backup file",
+                                title = stringResource(R.string.restore_backup),
+                                subtitle = stringResource(R.string.restore_desc),
                                 isDark = isDark,
                                 isLoading = isRestoreInProgress,
                                 onClick = { showRestoreDialog = true }
@@ -327,12 +327,12 @@ fun SettingsScreen(
             },
             title = {
                 Text(
-                    "Restore Backup",
+                    stringResource(R.string.restore_backup),
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
-                Text("This will restore your conversations from the backup file. Current data will be merged with backup data. Continue?")
+                Text(stringResource(R.string.restore_confirm))
             },
             confirmButton = {
                 Button(
@@ -345,9 +345,9 @@ fun SettingsScreen(
                             isRestoreInProgress = false
 
                             result.onSuccess {
-                                snackbarHostState.showSnackbar("Backup restored successfully!")
+                                snackbarHostState.showSnackbar(context.getString(R.string.restore_success))
                             }.onFailure { error ->
-                                snackbarHostState.showSnackbar("Restore failed: ${error.message}")
+                                snackbarHostState.showSnackbar(context.getString(R.string.restore_failed, error.message))
                             }
                         }
                     },
@@ -355,12 +355,12 @@ fun SettingsScreen(
                         containerColor = Color(0xFF4285F4)
                     )
                 ) {
-                    Text("Restore")
+                    Text(stringResource(R.string.restore))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRestoreDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

@@ -75,11 +75,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import id.xms.xcai.R
 import id.xms.xcai.ui.components.AIThinkingIndicator
 import id.xms.xcai.ui.components.AITypingIndicator
 import id.xms.xcai.ui.components.MessageItem
@@ -572,7 +574,7 @@ fun ChatScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     placeholder = {
                                         Text(
-                                            if (chatUiState.selectedImageUri != null) "Describe what to analyze..." else "Ask me anything...",
+                                            if (chatUiState.selectedImageUri != null) stringResource(R.string.describe_image) else stringResource(R.string.ask_me_anything),
                                             color = if (isDark) {
                                                 Color.White.copy(alpha = 0.5f)
                                             } else {
@@ -685,7 +687,7 @@ fun ChatScreen(
             },
             title = {
                 Text(
-                    text = "Rate Limit Reached",
+                    text = stringResource(R.string.rate_limit_title),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -696,20 +698,16 @@ fun ChatScreen(
                     if (!premiumStatus.isPremium) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Upgrade to Premium:",
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "• 100 requests per 30 minutes\n• Priority support\n• Faster response times",
-                            style = MaterialTheme.typography.bodySmall
+                            text = stringResource(R.string.upgrade_premium),
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF4285F4)
                         )
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showRateLimitDialog = false }) {
-                    Text("Got it")
+                    Text(stringResource(R.string.got_it))
                 }
             }
         )
@@ -727,16 +725,16 @@ fun ChatScreen(
                 )
             },
             title = {
-                Text("Low Quota Warning")
+                Text(stringResource(R.string.low_quota_title))
             },
             text = {
                 Column {
-                    Text("You have only ${chatUiState.remainingRequests} requests remaining.")
+                    Text(stringResource(R.string.low_quota_message, chatUiState.remainingRequests))
 
                     if (!premiumStatus.isPremium) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Consider upgrading to Premium for 100 requests!",
+                            text = stringResource(R.string.upgrade_premium),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF4285F4)
@@ -746,7 +744,7 @@ fun ChatScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLowQuotaWarning = false }) {
-                    Text("Understood")
+                    Text(stringResource(R.string.understood))
                 }
             }
         )
@@ -764,7 +762,7 @@ fun ChatScreen(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Select Image Source",
+                    text = stringResource(R.string.select_image_source),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -788,19 +786,19 @@ fun ChatScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PhotoLibrary,
-                            contentDescription = "Gallery",
+                            contentDescription = stringResource(R.string.gallery),
                             modifier = Modifier.size(28.dp),
                             tint = Color(0xFF4285F4)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "Gallery",
+                                text = stringResource(R.string.gallery),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Choose from your photos",
+                                text = stringResource(R.string.choose_from_photos),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
                             )
@@ -839,19 +837,19 @@ fun ChatScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "Camera",
+                            contentDescription = stringResource(R.string.camera),
                             modifier = Modifier.size(28.dp),
                             tint = Color(0xFF34A853)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "Camera",
+                                text = stringResource(R.string.camera),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Take a new photo",
+                                text = stringResource(R.string.take_new_photo),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
                             )
