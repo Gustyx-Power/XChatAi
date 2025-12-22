@@ -72,6 +72,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import id.xms.xcai.data.local.ChatEntity
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -406,6 +408,7 @@ fun MessageItem(
     if (message.isUser) {
         UserMessageBubble(
             message = message.message,
+            imageUri = message.imageUri,
             time = timeString,
             isDark = isDark,
             modifier = modifier
@@ -430,6 +433,7 @@ fun MessageItem(
 @Composable
 private fun UserMessageBubble(
     message: String,
+    imageUri: String?,
     time: String,
     isDark: Boolean,
     modifier: Modifier = Modifier
@@ -474,25 +478,37 @@ private fun UserMessageBubble(
                         )
                     )
                 ) {
-                    Box(
-                        modifier = Modifier.background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.1f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
+                    Column(
+                        modifier = Modifier.padding(8.dp)
                     ) {
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontSize = 16.sp,
-                                lineHeight = 22.sp
-                            ),
-                            color = if (isDark) Color.White else Color(0xFF202124),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                        )
+                        // Show image preview if available
+                        if (!imageUri.isNullOrEmpty()) {
+                            AsyncImage(
+                                model = imageUri,
+                                contentDescription = "Attached image",
+                                modifier = Modifier
+                                    .widthIn(max = 250.dp)
+                                    .heightIn(max = 200.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Fit
+                            )
+                            if (message.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                        
+                        // Show text message if not empty
+                        if (message.isNotEmpty()) {
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = 16.sp,
+                                    lineHeight = 22.sp
+                                ),
+                                color = if (isDark) Color.White else Color(0xFF202124),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                 }
             }
