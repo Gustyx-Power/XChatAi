@@ -123,4 +123,13 @@
     <string name="lifetime">$4 Lifetime</string>
     <string name="contact_telegram">Contact via Telegram for payment:</string>
     <string name="open_telegram">Open Telegram</string>
+    
+    <!-- Document -->
+    <string name="document">Document</string>
+    <string name="select_document">Select a document</string>
+    <string name="browse_files">Browse files (PDF, TXT, code)</string>
+    <string name="analyzing_document">Analyzing document…</string>
+    <string name="document_loaded">Document loaded: %1$s</string>
+    <string name="file_too_large">File too large. Max size: 500KB</string>
+    <string name="unsupported_file">Unsupported file type</string>
 </resources>

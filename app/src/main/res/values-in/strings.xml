@@ -123,4 +123,13 @@
     <string name="lifetime">$4 Seumur Hidup</string>
     <string name="contact_telegram">Hubungi via Telegram untuk pembayaran:</string>
     <string name="open_telegram">Buka Telegram</string>
+    
+    <!-- Document -->
+    <string name="document">Dokumen</string>
+    <string name="select_document">Pilih dokumen</string>
+    <string name="browse_files">Telusuri file (PDF, TXT, kode)</string>
+    <string name="analyzing_document">Menganalisis dokumen…</string>
+    <string name="document_loaded">Dokumen dimuat: %1$s</string>
+    <string name="file_too_large">File terlalu besar. Maks: 500KB</string>
+    <string name="unsupported_file">Jenis file tidak didukung</string>
 </resources>
