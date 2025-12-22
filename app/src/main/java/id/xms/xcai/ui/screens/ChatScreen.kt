@@ -6,6 +6,11 @@ import android.net.Uri
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,11 +38,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,6 +96,7 @@ import id.xms.xcai.ui.components.MessageItem
 import id.xms.xcai.ui.components.StreamingMessageItem
 import id.xms.xcai.ui.viewmodel.AuthViewModel
 import id.xms.xcai.ui.viewmodel.ChatViewModel
+import id.xms.xcai.data.util.DocumentReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -140,6 +149,38 @@ fun ChatScreen(
         if (success && cameraPhotoUri != null) {
             scope.launch {
                 processImageUri(context, cameraPhotoUri!!, chatViewModel, snackbarHostState)
+            }
+        }
+    }
+    
+    // Document state
+    var selectedDocumentName by remember { mutableStateOf<String?>(null) }
+    var selectedDocumentContent by remember { mutableStateOf<String?>(null) }
+    
+    // Document upload toast/pill popup
+    var showDocumentToast by remember { mutableStateOf(false) }
+    var documentToastMessage by remember { mutableStateOf("") }
+    
+    // Document picker launcher
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let { docUri ->
+            scope.launch {
+                withContext(Dispatchers.IO) {
+                    DocumentReader.readDocument(context, docUri)
+                }.onSuccess { docContent ->
+                    selectedDocumentName = docContent.fileName
+                    selectedDocumentContent = docContent.content
+                    // Show pill popup instead of snackbar
+                    documentToastMessage = docContent.fileName
+                    showDocumentToast = true
+                    // Auto hide after 2 seconds
+                    delay(2000)
+                    showDocumentToast = false
+                }.onFailure { error ->
+                    snackbarHostState.showSnackbar(error.message ?: "Failed to read document")
+                }
             }
         }
     }
@@ -343,13 +384,55 @@ fun ChatScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { paddingValues ->
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .imePadding()
-                    .navigationBarsPadding()
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .imePadding()
+                        .navigationBarsPadding()
+                ) {
+                    // Document upload pill popup at top
+                    AnimatedVisibility(
+                        visible = showDocumentToast,
+                        enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                        exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(24.dp),
+                                color = Color(0xFF4285F4),
+                                shadowElevation = 4.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "📄 $documentToastMessage",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    }
                 if (chatUiState.remainingRequests < 20 && !chatUiState.isLoadingCounter && !premiumStatus.isPremium) {
                     val maxReq = if (premiumStatus.maxRequests == -1) Int.MAX_VALUE else premiumStatus.maxRequests
                     val progress = chatUiState.remainingRequests.toFloat() / maxReq.toFloat()
@@ -507,7 +590,7 @@ fun ChatScreen(
                             }
                         }
 
-                        // Input field with image preview
+                        // Input field with image/document preview
                         Column(modifier = Modifier.weight(1f)) {
                             // Image preview if selected
                             chatUiState.selectedImageUri?.let { imageUri ->
@@ -541,6 +624,48 @@ fun ChatScreen(
                                                 imageVector = Icons.Default.Close,
                                                 contentDescription = "Remove",
                                                 tint = Color.White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Document preview if selected
+                            selectedDocumentName?.let { docName ->
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (isDark) Color(0xFF2D2D2D) else Color(0xFFF5F5F5),
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Description,
+                                            contentDescription = null,
+                                            tint = Color(0xFFEA4335),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = docName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                selectedDocumentName = null
+                                                selectedDocumentContent = null
+                                            },
+                                            modifier = Modifier.size(20.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Remove",
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -599,7 +724,7 @@ fun ChatScreen(
                         }
 
                         // Send button
-                        val hasContent = messageText.isNotBlank() || chatUiState.selectedImageUri != null
+                        val hasContent = messageText.isNotBlank() || chatUiState.selectedImageUri != null || selectedDocumentContent != null
                         Surface(
                             onClick = {
                                 if (chatUiState.isStreaming) {
@@ -616,6 +741,22 @@ fun ChatScreen(
                                                 val prompt = if (messageText.isBlank()) "What's in this image?" else messageText.trim()
                                                 chatViewModel.sendImageMessage(userId, prompt, imageBase64, imageUri)
                                                 messageText = ""
+                                            } else if (selectedDocumentContent != null && selectedDocumentName != null) {
+                                                // Send with document context (only show file indicator in chat)
+                                                val userQuestion = if (messageText.isBlank()) {
+                                                    "Please analyze this document and provide a summary."
+                                                } else {
+                                                    messageText.trim()
+                                                }
+                                                chatViewModel.sendDocumentMessage(
+                                                    userId = userId,
+                                                    userQuestion = userQuestion,
+                                                    documentName = selectedDocumentName!!,
+                                                    documentContent = selectedDocumentContent!!
+                                                )
+                                                messageText = ""
+                                                selectedDocumentName = null
+                                                selectedDocumentContent = null
                                             } else if (messageText.isNotBlank()) {
                                                 // Regular text message
                                                 chatViewModel.sendMessage(userId, messageText.trim())
@@ -670,6 +811,7 @@ fun ChatScreen(
                         }
                     }
                 }
+            }
             }
         }
     }
@@ -850,6 +992,46 @@ fun ChatScreen(
                             )
                             Text(
                                 text = stringResource(R.string.take_new_photo),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Document option
+                Surface(
+                    onClick = {
+                        showImageSourceSheet = false
+                        documentPickerLauncher.launch(arrayOf("*/*"))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Description,
+                            contentDescription = stringResource(R.string.document),
+                            modifier = Modifier.size(28.dp),
+                            tint = Color(0xFFEA4335)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.document),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = stringResource(R.string.browse_files),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
                             )
