@@ -132,4 +132,16 @@
     <string name="document_loaded">Document loaded: %1$s</string>
     <string name="file_too_large">File too large. Max size: 500KB</string>
     <string name="unsupported_file">Unsupported file type</string>
+    
+    <!-- Custom Prompt -->
+    <string name="custom_prompt">Custom Prompt</string>
+    <string name="custom_prompt_desc">Write your own system prompt to customize how the AI responds to you.</string>
+    <string name="enter_custom_prompt">Enter your custom prompt</string>
+    <string name="custom_prompt_saved">Custom prompt saved!</string>
+    <string name="edit">Edit</string>
+    <string name="save">Save</string>
+    
+    <!-- Edit Message -->
+    <string name="edit_message">Edit Message</string>
+    <string name="edit_and_resend">Edit and Resend</string>
 </resources>

@@ -132,4 +132,16 @@
     <string name="document_loaded">Dokumen dimuat: %1$s</string>
     <string name="file_too_large">File terlalu besar. Maks: 500KB</string>
     <string name="unsupported_file">Jenis file tidak didukung</string>
+    
+    <!-- Custom Prompt -->
+    <string name="custom_prompt">Prompt Kustom</string>
+    <string name="custom_prompt_desc">Tulis prompt sistem kamu sendiri untuk menyesuaikan cara AI merespons.</string>
+    <string name="enter_custom_prompt">Masukkan prompt kustom</string>
+    <string name="custom_prompt_saved">Prompt kustom disimpan!</string>
+    <string name="edit">Edit</string>
+    <string name="save">Simpan</string>
+    
+    <!-- Edit Message -->
+    <string name="edit_message">Edit Pesan</string>
+    <string name="edit_and_resend">Edit dan Kirim Ulang</string>
 </resources>
