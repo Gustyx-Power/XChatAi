@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,26 +50,26 @@ fun OnboardingScreen(
 
     val pages = listOf(
         OnboardingPage(
-            title = "Welcome to XChatAi",
-            description = "Your intelligent AI assistant powered by advanced language models. Get instant answers, generate code, and boost your productivity.",
+            title = stringResource(R.string.onboarding_welcome_title),
+            description = stringResource(R.string.onboarding_welcome_desc),
             icon = Icons.Default.EmojiEmotions,
             color = Color(0xFF4285F4)
         ),
         OnboardingPage(
-            title = "Multiple AI Models",
-            description = "Choose from various AI models like Kimi K2, ChatGPT, and more. Switch models anytime to get the best results for your needs.",
+            title = stringResource(R.string.onboarding_models_title),
+            description = stringResource(R.string.onboarding_models_desc),
             icon = Icons.Default.Psychology,
             color = Color(0xFF34A853)
         ),
         OnboardingPage(
-            title = "Response Modes",
-            description = "Get code only, detailed explanations, quick answers, or full tutorials. Customize how AI responds to match your workflow.",
+            title = stringResource(R.string.onboarding_modes_title),
+            description = stringResource(R.string.onboarding_modes_desc),
             icon = Icons.Default.FormatListBulleted,
             color = Color(0xFFFBBC04)
         ),
         OnboardingPage(
-            title = "Built by Developer",
-            description = "Developed with ❤️ by Gusti Aditya Muzaky. Open source and continuously improving based on your feedback.",
+            title = stringResource(R.string.onboarding_developer_title),
+            description = stringResource(R.string.onboarding_developer_desc),
             icon = Icons.Default.Code,
             color = Color(0xFFEA4335),
             isDeveloperPage = true // ← SPECIAL FLAG FOR DEVELOPER PAGE
@@ -177,7 +178,7 @@ fun OnboardingScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = if (pagerState.currentPage < pages.size - 1) "Next" else "Get Started",
+                                text = if (pagerState.currentPage < pages.size - 1) stringResource(R.string.next) else stringResource(R.string.get_started),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -318,7 +319,7 @@ private fun DeveloperPageContent(
             color = page.color.copy(alpha = 0.2f)
         ) {
             Text(
-                text = "Intermediate Android Apps & Tools Developer",
+                text = stringResource(R.string.developer_role),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
                 color = page.color,
@@ -364,7 +365,7 @@ private fun DeveloperPageContent(
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = "Visit My Portfolio",
+                    text = stringResource(R.string.visit_portfolio),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -390,7 +391,7 @@ private fun DeveloperPageContent(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = "Check out my projects and contact info",
+                text = stringResource(R.string.portfolio_info),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (isDark) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center
