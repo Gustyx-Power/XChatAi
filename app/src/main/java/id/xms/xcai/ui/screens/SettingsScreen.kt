@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.xms.xcai.BuildConfig
@@ -40,6 +41,7 @@ fun SettingsScreen(
     val isDark = isSystemInDarkTheme()
     val selectedModelId by settingsViewModel.selectedModelId.collectAsState()
     val selectedResponseMode by settingsViewModel.responseMode.collectAsState() // ← NEW
+    val customPrompt by settingsViewModel.customPrompt.collectAsState()
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -48,6 +50,10 @@ fun SettingsScreen(
     var showRestoreDialog by remember { mutableStateOf(false) }
     var isBackupInProgress by remember { mutableStateOf(false) }
     var isRestoreInProgress by remember { mutableStateOf(false) }
+    
+    // Custom prompt editor dialog
+    var showCustomPromptDialog by remember { mutableStateOf(false) }
+    var editingCustomPrompt by remember { mutableStateOf("") }
 
     // Handle system back gesture/button
     BackHandler {
@@ -137,12 +143,34 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             ResponseMode.entries.forEachIndexed { index, mode ->
-                                ResponseModeItem(
-                                    mode = mode,
-                                    isSelected = mode == selectedResponseMode,
-                                    isDark = isDark,
-                                    onClick = { settingsViewModel.setResponseMode(mode) }
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ResponseModeItem(
+                                        mode = mode,
+                                        isSelected = mode == selectedResponseMode,
+                                        isDark = isDark,
+                                        onClick = { settingsViewModel.setResponseMode(mode) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    
+                                    // Edit button for CUSTOM mode
+                                    if (mode == ResponseMode.CUSTOM && mode == selectedResponseMode) {
+                                        IconButton(
+                                            onClick = {
+                                                editingCustomPrompt = customPrompt
+                                                showCustomPromptDialog = true
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Edit,
+                                                contentDescription = stringResource(R.string.edit),
+                                                tint = Color(0xFF4285F4)
+                                            )
+                                        }
+                                    }
+                                }
 
                                 if (index < ResponseMode.entries.size - 1) {
                                     HorizontalDivider(
@@ -365,6 +393,66 @@ fun SettingsScreen(
             }
         )
     }
+    
+    // Custom Prompt Editor Dialog
+    if (showCustomPromptDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomPromptDialog = false },
+            icon = {
+                Text("✨", fontSize = 32.sp)
+            },
+            title = {
+                Text(
+                    stringResource(R.string.custom_prompt),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        stringResource(R.string.custom_prompt_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    OutlinedTextField(
+                        value = editingCustomPrompt,
+                        onValueChange = { editingCustomPrompt = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        label = { Text(stringResource(R.string.enter_custom_prompt)) },
+                        placeholder = { Text("Example: Act as a friendly mentor...") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF4285F4),
+                            unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.3f)
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        settingsViewModel.setCustomPrompt(editingCustomPrompt)
+                        showCustomPromptDialog = false
+                        scope.launch {
+                            snackbarHostState.showSnackbar(context.getString(R.string.custom_prompt_saved))
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4))
+                ) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomPromptDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -433,7 +521,8 @@ private fun ResponseModeItem(
     mode: ResponseMode,
     isSelected: Boolean,
     isDark: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         onClick = onClick,
@@ -443,7 +532,7 @@ private fun ResponseModeItem(
         } else {
             Color.Transparent
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
