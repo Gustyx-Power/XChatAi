@@ -38,6 +38,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.SmartToy
@@ -400,7 +401,8 @@ fun MessageItem(
     message: ChatEntity,
     modifier: Modifier = Modifier,
     isStreaming: Boolean = false,
-    streamingText: String = ""
+    streamingText: String = "",
+    onEdit: ((ChatEntity) -> Unit)? = null
 ) {
     val isDark = isSystemInDarkTheme()
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -412,6 +414,7 @@ fun MessageItem(
             imageUri = message.imageUri,
             time = timeString,
             isDark = isDark,
+            onEdit = { onEdit?.invoke(message) },
             modifier = modifier
         )
     } else {
@@ -437,6 +440,7 @@ private fun UserMessageBubble(
     imageUri: String?,
     time: String,
     isDark: Boolean,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -514,15 +518,37 @@ private fun UserMessageBubble(
                 }
             }
             Spacer(modifier = Modifier.size(4.dp))
-            Text(
-                text = time,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (isDark) {
-                    Color.White.copy(alpha = 0.5f)
-                } else {
-                    Color.Black.copy(alpha = 0.5f)
+            
+            // Time and Edit button row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                // Edit button (small icon)
+                IconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = if (isDark) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f),
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
-            )
+                
+                Spacer(modifier = Modifier.width(4.dp))
+                
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isDark) {
+                        Color.White.copy(alpha = 0.5f)
+                    } else {
+                        Color.Black.copy(alpha = 0.5f)
+                    }
+                )
+            }
         }
     }
 }
