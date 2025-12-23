@@ -144,4 +144,26 @@
     <!-- Edit Message -->
     <string name="edit_message">Edit Message</string>
     <string name="edit_and_resend">Edit and Resend</string>
+    
+    <!-- Login Screen -->
+    <string name="login_tagline">Fast AI Assistant on the Go</string>
+    <string name="feature_instant_responses">Instant AI Responses</string>
+    <string name="feature_multiple_models">Multiple AI Models</string>
+    <string name="feature_code_generation">Code Generation</string>
+    <string name="feature_custom_modes">Custom Response Modes</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="terms_privacy">By continuing, you agree to our Terms &amp; Privacy Policy</string>
+    
+    <!-- Onboarding Screen -->
+    <string name="onboarding_welcome_title">Welcome to XChatAi</string>
+    <string name="onboarding_welcome_desc">Your intelligent AI assistant powered by advanced language models. Get instant answers, generate code, and boost your productivity.</string>
+    <string name="onboarding_models_title">Multiple AI Models</string>
+    <string name="onboarding_models_desc">Choose from various AI models like Kimi K2, ChatGPT, and more. Switch models anytime to get the best results for your needs.</string>
+    <string name="onboarding_modes_title">Response Modes</string>
+    <string name="onboarding_modes_desc">Get code only, detailed explanations, quick answers, or full tutorials. Customize how AI responds to match your workflow.</string>
+    <string name="onboarding_developer_title">Built by Developer</string>
+    <string name="onboarding_developer_desc">Developed with ❤️ by Gusti Aditya Muzaky. Open source and continuously improving based on your feedback.</string>
+    <string name="developer_role">Intermediate Android Apps &amp; Tools Developer</string>
+    <string name="visit_portfolio">Visit My Portfolio</string>
+    <string name="portfolio_info">Check out my projects and contact info</string>
 </resources>

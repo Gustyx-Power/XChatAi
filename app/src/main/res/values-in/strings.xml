@@ -101,7 +101,7 @@
     <string name="onboarding_title_3">Berbagai Model AI</string>
     <string name="onboarding_desc_3">Pilih dari berbagai model AI yang sesuai dengan kebutuhan Anda</string>
     <string name="get_started">Mulai</string>
-    <string name="next">Lanjut</string>
+    <string name="next">Selanjutnya</string>
     <string name="skip">Lewati</string>
     
     <!-- Login -->
@@ -144,4 +144,26 @@
     <!-- Edit Message -->
     <string name="edit_message">Edit Pesan</string>
     <string name="edit_and_resend">Edit dan Kirim Ulang</string>
+    
+    <!-- Login Screen -->
+    <string name="login_tagline">Asisten AI Cepat di Genggamanmu</string>
+    <string name="feature_instant_responses">Respons AI Instan</string>
+    <string name="feature_multiple_models">Berbagai Model AI</string>
+    <string name="feature_code_generation">Pembuatan Kode</string>
+    <string name="feature_custom_modes">Mode Respons Kustom</string>
+    <string name="sign_in_google">Masuk dengan Google</string>
+    <string name="terms_privacy">Dengan melanjutkan, kamu setuju dengan Syarat &amp; Kebijakan Privasi kami</string>
+    
+    <!-- Onboarding Screen -->
+    <string name="onboarding_welcome_title">Selamat Datang di XChatAi</string>
+    <string name="onboarding_welcome_desc">Asisten AI cerdasmu yang didukung model bahasa canggih. Dapatkan jawaban instan, buat kode, dan tingkatkan produktivitasmu.</string>
+    <string name="onboarding_models_title">Berbagai Model AI</string>
+    <string name="onboarding_models_desc">Pilih dari berbagai model AI seperti Kimi K2, ChatGPT, dan lainnya. Ganti model kapan saja untuk hasil terbaik sesuai kebutuhanmu.</string>
+    <string name="onboarding_modes_title">Mode Respons</string>
+    <string name="onboarding_modes_desc">Dapatkan kode saja, penjelasan detail, jawaban singkat, atau tutorial lengkap. Sesuaikan cara AI merespons sesuai alur kerjamu.</string>
+    <string name="onboarding_developer_title">Dibuat oleh Developer</string>
+    <string name="onboarding_developer_desc">Dikembangkan dengan ❤️ oleh Gusti Aditya Muzaky. Open source dan terus berkembang berdasarkan masukanmu.</string>
+    <string name="developer_role">Pengembang Aplikasi &amp; Tools Android Menengah</string>
+    <string name="visit_portfolio">Kunjungi Portofolio Saya</string>
+    <string name="portfolio_info">Lihat proyek dan info kontak saya</string>
 </resources>
