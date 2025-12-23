@@ -34,5 +34,8 @@ interface ChatDao {
 
     @Update
     suspend fun updateChat(chat: ChatEntity)
+    
+    @Query("DELETE FROM chats WHERE conversationId = :conversationId AND timestamp >= :timestamp")
+    suspend fun deleteMessagesFromTimestamp(conversationId: Long, timestamp: Long)
 
 }
