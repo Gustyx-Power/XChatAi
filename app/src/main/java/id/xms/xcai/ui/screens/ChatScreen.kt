@@ -41,12 +41,15 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -90,6 +93,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import id.xms.xcai.R
+import id.xms.xcai.data.local.ChatEntity
 import id.xms.xcai.ui.components.AIThinkingIndicator
 import id.xms.xcai.ui.components.AITypingIndicator
 import id.xms.xcai.ui.components.MessageItem
@@ -125,6 +129,11 @@ fun ChatScreen(
     var showRateLimitDialog by remember { mutableStateOf(false) }
     var showLowQuotaWarning by remember { mutableStateOf(false) }
     var rateLimitMessage by remember { mutableStateOf("") }
+    
+    // Edit message dialog state
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editingMessage by remember { mutableStateOf<ChatEntity?>(null) }
+    var editingMessageText by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
@@ -498,7 +507,15 @@ fun ChatScreen(
                                         messageIndex == chatUiState.messages.indexOfLast { it.isUser }
 
                                 MessageItem(
-                                    message = message
+                                    message = message,
+                                    onEdit = { msg ->
+                                        // Only allow editing user messages (not document messages)
+                                        if (!msg.message.startsWith("📄")) {
+                                            editingMessage = msg
+                                            editingMessageText = msg.message
+                                            showEditDialog = true
+                                        }
+                                    }
                                 )
                             }
 
@@ -887,6 +904,72 @@ fun ChatScreen(
             confirmButton = {
                 TextButton(onClick = { showLowQuotaWarning = false }) {
                     Text(stringResource(R.string.understood))
+                }
+            }
+        )
+    }
+    
+    // Edit Message Dialog
+    if (showEditDialog && editingMessage != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showEditDialog = false 
+                editingMessage = null
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    tint = Color(0xFF4285F4),
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = {
+                Text(
+                    stringResource(R.string.edit_message),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                OutlinedTextField(
+                    value = editingMessageText,
+                    onValueChange = { editingMessageText = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    placeholder = { Text("Edit your message...") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF4285F4),
+                        unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.3f)
+                    )
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        authUiState.user?.uid?.let { uid ->
+                            editingMessage?.let { originalMsg ->
+                                if (editingMessageText.isNotBlank()) {
+                                    chatViewModel.editAndResendMessage(uid, originalMsg, editingMessageText.trim())
+                                    showEditDialog = false
+                                    editingMessage = null
+                                    editingMessageText = ""
+                                }
+                            }
+                        }
+                    },
+                    enabled = editingMessageText.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4))
+                ) {
+                    Text(stringResource(R.string.edit_and_resend))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showEditDialog = false 
+                    editingMessage = null
+                }) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
