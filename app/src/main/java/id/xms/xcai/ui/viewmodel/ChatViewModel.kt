@@ -69,12 +69,23 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private var streamingJob: Job? = null
     private var premiumJob: Job? = null
     private var responseModeJob: Job? = null
+    private var customPromptJob: Job? = null
+    
+    // Custom prompt for CUSTOM response mode
+    private var _customPrompt = ""
 
     init {
         responseModeJob = viewModelScope.launch {
             preferencesManager.responseMode.collect { mode ->
                 _chatUiState.value = _chatUiState.value.copy(currentResponseMode = mode)
                 Log.d("ChatViewModel", "Response mode changed to: ${mode.displayName}")
+            }
+        }
+        
+        customPromptJob = viewModelScope.launch {
+            preferencesManager.customPrompt.collect { prompt ->
+                _customPrompt = prompt
+                Log.d("ChatViewModel", "Custom prompt loaded: ${prompt.take(50)}...")
             }
         }
     }
@@ -319,13 +330,20 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 _chatUiState.value = _chatUiState.value.copy(isThinking = true)
 
                 val maxRequests = premiumManager.getMaxRequests(_premiumStatus.value)
+                
+                // Use custom prompt if CUSTOM mode is selected
+                val effectiveSystemPrompt = if (responseMode == ResponseMode.CUSTOM && _customPrompt.isNotBlank()) {
+                    "IDENTITY: XChatAi by Gusti Aditya Muzaky (GustyxPower).\n\n${_customPrompt}"
+                } else {
+                    responseMode.systemPrompt
+                }
 
                 val result = repository.sendMessageToGroq(
                     conversationId = conversationId,
                     userMessage = message,
                     userId = userId,
                     maxRequests = maxRequests,
-                    systemPrompt = responseMode.systemPrompt
+                    systemPrompt = effectiveSystemPrompt
                 )
 
                 result.onSuccess { aiResponse ->
@@ -382,6 +400,37 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Edit user message and resend to AI.
+     * Deletes the old user message and AI response, then sends edited message.
+     */
+    fun editAndResendMessage(userId: String, originalMessage: ChatEntity, newMessageText: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("ChatViewModel", "=== EDIT AND RESEND MESSAGE ===")
+                Log.d("ChatViewModel", "Original: ${originalMessage.message.take(50)}")
+                Log.d("ChatViewModel", "New: ${newMessageText.take(50)}")
+
+                val conversationId = originalMessage.conversationId
+
+                // Delete original user message and subsequent AI response
+                repository.deleteMessagesFromTimestamp(conversationId, originalMessage.timestamp)
+                
+                // Reload chats to reflect deletion
+                loadChats(conversationId)
+                
+                // Send the edited message
+                sendMessage(userId, newMessageText)
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error in editAndResendMessage: ${e.message}", e)
+                _chatUiState.value = _chatUiState.value.copy(
+                    error = "Failed to edit message"
+                )
+            }
+        }
+    }
+
+    /**
      * Send message with document context.
      * Display only file indicator in chat, but send full content to AI.
      */
@@ -429,6 +478,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 _chatUiState.value = _chatUiState.value.copy(isThinking = true)
 
                 val maxRequests = premiumManager.getMaxRequests(_premiumStatus.value)
+                
+                // Use custom prompt if CUSTOM mode is selected
+                val effectiveSystemPrompt = if (responseMode == ResponseMode.CUSTOM && _customPrompt.isNotBlank()) {
+                    "IDENTITY: XChatAi by Gusti Aditya Muzaky (GustyxPower).\n\n${_customPrompt}"
+                } else {
+                    responseMode.systemPrompt
+                }
 
                 // Send AI context (with full document) to API
                 val result = repository.sendMessageToGroq(
@@ -436,7 +492,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     userMessage = aiContext,
                     userId = userId,
                     maxRequests = maxRequests,
-                    systemPrompt = responseMode.systemPrompt
+                    systemPrompt = effectiveSystemPrompt
                 )
 
                 result.onSuccess { aiResponse ->
