@@ -105,6 +105,10 @@ class ChatRepository(context: Context) {
     suspend fun deleteChatsInConversation(conversationId: Long) {
         chatDao.deleteChatsInConversation(conversationId)
     }
+    
+    suspend fun deleteMessagesFromTimestamp(conversationId: Long, timestamp: Long) {
+        chatDao.deleteMessagesFromTimestamp(conversationId, timestamp)
+    }
 
     // IMPROVED: Better error handling with try-catch
     suspend fun checkServerRateLimit(userId: String, maxRequests: Int = 25): Pair<Boolean, String> =
