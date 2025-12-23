@@ -114,6 +114,17 @@ enum class ResponseMode(
             Format: "To do X, use Y. [code]. Works because Z."
         """.trimIndent(),
         icon = "⚡"
+    ),
+
+    CUSTOM(
+        displayName = "Custom",
+        description = "Your custom AI personality",
+        systemPrompt = """
+            IDENTITY: XChatAi by Gusti Aditya Muzaky (GustyxPower).
+            
+            Follow the user's custom instructions.
+        """.trimIndent(),
+        icon = "✨"
     );
 
     companion object {
