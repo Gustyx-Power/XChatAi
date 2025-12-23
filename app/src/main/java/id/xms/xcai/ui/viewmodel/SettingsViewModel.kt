@@ -42,6 +42,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ResponseMode.CHAT
         )
+    
+    // Custom prompt for CUSTOM response mode
+    val customPrompt: StateFlow<String> = preferencesManager.customPrompt
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ""
+        )
 
     fun setSelectedModel(modelId: String) {
         viewModelScope.launch {
@@ -63,6 +71,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setResponseMode(mode: ResponseMode) {
         viewModelScope.launch {
             preferencesManager.setResponseMode(mode)
+        }
+    }
+    
+    fun setCustomPrompt(prompt: String) {
+        viewModelScope.launch {
+            preferencesManager.setCustomPrompt(prompt)
         }
     }
 }
