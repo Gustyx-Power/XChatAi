@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -105,7 +106,7 @@ fun LoginScreen(
 
                 // Tagline
                 Text(
-                    text = "Fast AI Assistant on the Go",
+                    text = stringResource(R.string.login_tagline),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (isDark) {
                         Color.White.copy(alpha = 0.8f)
@@ -135,10 +136,10 @@ fun LoginScreen(
                         modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        FeatureItem("⚡", "Instant AI Responses", isDark)
-                        FeatureItem("🧠", "Multiple AI Models", isDark)
-                        FeatureItem("💻", "Code Generation", isDark)
-                        FeatureItem("🎯", "Custom Response Modes", isDark)
+                        FeatureItem("⚡", stringResource(R.string.feature_instant_responses), isDark)
+                        FeatureItem("🧠", stringResource(R.string.feature_multiple_models), isDark)
+                        FeatureItem("💻", stringResource(R.string.feature_code_generation), isDark)
+                        FeatureItem("🎯", stringResource(R.string.feature_custom_modes), isDark)
                     }
                 }
 
@@ -174,7 +175,7 @@ fun LoginScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                "Sign in with Google",
+                                stringResource(R.string.sign_in_google),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -186,7 +187,7 @@ fun LoginScreen(
 
                 // Footer text
                 Text(
-                    text = "By continuing, you agree to our Terms & Privacy Policy",
+                    text = stringResource(R.string.terms_privacy),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isDark) {
                         Color.White.copy(alpha = 0.5f)
