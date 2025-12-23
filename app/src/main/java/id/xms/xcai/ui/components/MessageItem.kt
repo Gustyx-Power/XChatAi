@@ -1135,39 +1135,40 @@ private fun ThinkingSection(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    
+    // Calculate analysis summary
+    val wordCount = thinking.split("\\s+".toRegex()).size
+    val analysisLabel = when {
+        wordCount > 200 -> "Deep Analysis"
+        wordCount > 50 -> "Analyzed"
+        else -> "Quick Thought"
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = Color.Transparent,
-        border = BorderStroke(
-            width = 1.dp,
-            color = if (isDark) {
-                Color.White.copy(alpha = 0.15f)
-            } else {
-                Color.Black.copy(alpha = 0.15f)
-            }
-        ),
-        shadowElevation = 2.dp
+        shape = RoundedCornerShape(16.dp),
+        color = Color.Transparent
     ) {
         Box(
             modifier = Modifier.background(
-                brush = Brush.verticalGradient(
+                brush = Brush.horizontalGradient(
                     colors = if (isDark) {
                         listOf(
-                            Color(0xFF2D2D2D).copy(alpha = 0.6f),
-                            Color(0xFF1A1A1A).copy(alpha = 0.4f)
+                            Color(0xFF1A237E).copy(alpha = 0.3f),
+                            Color(0xFF311B92).copy(alpha = 0.2f),
+                            Color(0xFF4A148C).copy(alpha = 0.15f)
                         )
                     } else {
                         listOf(
-                            Color(0xFFF8F9FA).copy(alpha = 0.9f),
-                            Color(0xFFE8EAED).copy(alpha = 0.7f)
+                            Color(0xFFE8EAF6).copy(alpha = 0.9f),
+                            Color(0xFFEDE7F6).copy(alpha = 0.8f),
+                            Color(0xFFF3E5F5).copy(alpha = 0.7f)
                         )
                     }
                 )
             )
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1176,60 +1177,69 @@ private fun ThinkingSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Sparkle icon like Gemini
                         Text(
-                            text = "🧠",
-                            style = MaterialTheme.typography.labelMedium
+                            text = "✨",
+                            style = MaterialTheme.typography.titleMedium
                         )
-                        Text(
-                            text = "Thought process",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isDark) Color(0xFF8AB4F8) else Color(0xFF1A73E8)
-                        )
-                        Text(
-                            text = "(${thinking.split("\\s+".toRegex()).size} words)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (isDark) {
-                                Color.White.copy(alpha = 0.6f)
-                            } else {
-                                Color.Black.copy(alpha = 0.6f)
-                            }
-                        )
+                        Column {
+                            Text(
+                                text = analysisLabel,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) Color(0xFFB388FF) else Color(0xFF6200EA)
+                            )
+                            Text(
+                                text = "$wordCount words • Tap to ${if (isExpanded) "hide" else "view"}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isDark) {
+                                    Color.White.copy(alpha = 0.5f)
+                                } else {
+                                    Color.Black.copy(alpha = 0.5f)
+                                }
+                            )
+                        }
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(
                             onClick = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("Thinking", thinking))
-                                Toast.makeText(context, "Thinking copied!", Toast.LENGTH_SHORT).show()
+                                clipboard.setPrimaryClip(ClipData.newPlainText("Analysis", thinking))
+                                Toast.makeText(context, "Analysis copied!", Toast.LENGTH_SHORT).show()
                             },
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
                                 contentDescription = "Copy",
-                                modifier = Modifier.size(16.dp),
-                                tint = if (isDark) {
-                                    Color.White.copy(alpha = 0.6f)
-                                } else {
-                                    Color.Black.copy(alpha = 0.6f)
-                                }
+                                modifier = Modifier.size(18.dp),
+                                tint = if (isDark) Color(0xFFB388FF) else Color(0xFF6200EA)
                             )
                         }
 
-                        IconButton(
-                            onClick = onToggle,
+                        Surface(
+                            shape = CircleShape,
+                            color = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f),
                             modifier = Modifier.size(32.dp)
                         ) {
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                tint = if (isDark) Color(0xFF8AB4F8) else Color(0xFF1A73E8)
-                            )
+                            IconButton(
+                                onClick = onToggle,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                    tint = if (isDark) Color(0xFFB388FF) else Color(0xFF6200EA),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -1240,30 +1250,41 @@ private fun ThinkingSection(
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     Column {
-                        Spacer(modifier = Modifier.size(8.dp))
+                        Spacer(modifier = Modifier.size(10.dp))
                         HorizontalDivider(
                             color = if (isDark) {
-                                Color.White.copy(alpha = 0.15f)
+                                Color(0xFFB388FF).copy(alpha = 0.2f)
                             } else {
-                                Color.Black.copy(alpha = 0.15f)
+                                Color(0xFF6200EA).copy(alpha = 0.15f)
                             }
                         )
                         Spacer(modifier = Modifier.size(12.dp))
 
-                        Text(
-                            text = thinking,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp
-                            ),
-                            color = if (isDark) {
-                                Color.White.copy(alpha = 0.8f)
-                            } else {
-                                Color(0xFF202124).copy(alpha = 0.8f)
-                            },
-                            modifier = Modifier.padding(4.dp)
-                        )
+                        // Content with cleaner styling
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isDark) Color(0xFF1A1A1A).copy(alpha = 0.5f) else Color.White.copy(alpha = 0.7f),
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f)
+                            )
+                        ) {
+                            Text(
+                                text = thinking,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 13.sp,
+                                    lineHeight = 20.sp,
+                                    letterSpacing = 0.2.sp
+                                ),
+                                color = if (isDark) {
+                                    Color.White.copy(alpha = 0.85f)
+                                } else {
+                                    Color(0xFF37474F)
+                                },
+                                modifier = Modifier.padding(14.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -1278,34 +1299,72 @@ fun StreamingMessageItem(
 ) {
     val isDark = isSystemInDarkTheme()
     
+    // Check if currently in thinking mode (has opening <think> but no closing </think>)
+    val isThinking = text.contains("<think>") && !text.contains("</think>")
+    
+    // Check if thinking is complete (has both opening and closing tags)
+    val hasCompletedThinking = text.contains("<think>") && text.contains("</think>")
+    
     // Parse content for real-time markdown rendering
     val parsed = remember(text) { parseMessageContent(text) }
+    
+    // Check if there's actual content after thinking (not just empty)
+    val hasContentAfterThinking = parsed.content.any { 
+        when (it) {
+            is MessageContent.Text -> it.text.isNotBlank()
+            else -> true
+        }
+    }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Render parsed content with markdown
+        // ONLY show "Analyzing..." indicator when AI is actively thinking
+        if (isThinking) {
+            StreamingThinkingIndicator(isDark = isDark)
+            // Don't show anything else while thinking - wait for thinking to complete
+        } else {
+            // Thinking is complete OR there's no thinking at all
+            
+            // Show completed thinking section FIRST if thinking is done
+            if (hasCompletedThinking && parsed.thinking != null) {
+                var isThinkingExpanded by remember { mutableStateOf(false) }
+                ThinkingSection(
+                    thinking = parsed.thinking,
+                    isExpanded = isThinkingExpanded,
+                    onToggle = { isThinkingExpanded = !isThinkingExpanded },
+                    isDark = isDark
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            
+            // THEN render the output content (parsed content already excludes think tags)
         Column(modifier = Modifier.fillMaxWidth()) {
             parsed.content.forEach { item ->
                 when (item) {
                     is MessageContent.Text -> {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                text = parseStyledText(item.text),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontSize = 15.sp,
-                                    lineHeight = 24.sp,
-                                    letterSpacing = 0.sp
-                                ),
-                                color = if (isDark) {
-                                    Color.White.copy(alpha = 0.92f)
-                                } else {
-                                    Color(0xFF1F1F1F)
+                        // Skip empty text that might result from think tag removal
+                        if (item.text.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text(
+                                    text = parseStyledText(item.text),
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontSize = 15.sp,
+                                        lineHeight = 24.sp,
+                                        letterSpacing = 0.sp
+                                    ),
+                                    color = if (isDark) {
+                                        Color.White.copy(alpha = 0.92f)
+                                    } else {
+                                        Color(0xFF1F1F1F)
+                                    }
+                                )
+                                if (!isThinking) {
+                                    BlinkingCursor(isDark = isDark)
                                 }
-                            )
-                            BlinkingCursor(isDark = isDark)
+                            }
                         }
                     }
                     is MessageContent.Heading -> {
@@ -1338,6 +1397,90 @@ fun StreamingMessageItem(
                         }
                     }
                 }
+            }
+        }
+        } // Close else block for !isThinking
+    }
+}
+
+@Composable
+private fun StreamingThinkingIndicator(
+    isDark: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "thinking_pulse")
+    
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "thinking_pulse_alpha"
+    )
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.Transparent
+    ) {
+        Box(
+            modifier = Modifier.background(
+                brush = Brush.horizontalGradient(
+                    colors = if (isDark) {
+                        listOf(
+                            Color(0xFF1A237E).copy(alpha = 0.3f * pulseAlpha),
+                            Color(0xFF311B92).copy(alpha = 0.2f * pulseAlpha),
+                            Color(0xFF4A148C).copy(alpha = 0.15f * pulseAlpha)
+                        )
+                    } else {
+                        listOf(
+                            Color(0xFFE8EAF6).copy(alpha = 0.9f),
+                            Color(0xFFEDE7F6).copy(alpha = 0.8f),
+                            Color(0xFFF3E5F5).copy(alpha = 0.7f)
+                        )
+                    }
+                )
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Animated sparkle icon
+                Text(
+                    text = "✨",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.alpha(pulseAlpha)
+                )
+                Column {
+                    Text(
+                        text = "Analyzing...",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) Color(0xFFB388FF) else Color(0xFF6200EA)
+                    )
+                    Text(
+                        text = "AI is thinking",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isDark) {
+                            Color.White.copy(alpha = 0.5f)
+                        } else {
+                            Color.Black.copy(alpha = 0.5f)
+                        }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // Spinning indicator
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = if (isDark) Color(0xFFB388FF) else Color(0xFF6200EA),
+                    strokeWidth = 2.dp
+                )
             }
         }
     }
