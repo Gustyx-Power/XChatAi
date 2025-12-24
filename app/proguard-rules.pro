@@ -183,3 +183,24 @@
 #     public static *** w(...);
 #     public static *** e(...);
 # }
+
+# ========================
+# SLF4J (Required by iText7)
+# ========================
+
+# Ignore missing SLF4J binding classes - iText uses SLF4J but Android doesn't have it
+-dontwarn org.slf4j.**
+-keep class org.slf4j.** { *; }
+-dontwarn org.slf4j.impl.StaticLoggerBinder
+-dontwarn org.slf4j.impl.StaticMDCBinder
+-dontwarn org.slf4j.impl.StaticMarkerBinder
+
+# ========================
+# iText7 PDF Library
+# ========================
+
+-dontwarn com.itextpdf.**
+-keep class com.itextpdf.** { *; }
+-dontwarn org.bouncycastle.**
+-keep class org.bouncycastle.** { *; }
+

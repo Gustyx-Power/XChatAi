@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# --- Konfigurasi Keystore (Hardcoded) ---
+KEYSTORE_PATH="/home/gustyxpower/Documents/Project/XMS/Keystore/Keystore-XCAI/xcai-key.jks"
+KEY_ALIAS="xcaikey"
+KEYSTORE_PASSWORD="gusti717"
+KEY_PASSWORD="gusti717"
+
 # --- Membersihkan Proyek (Langkah Awal Anda) ---
 echo "Membersihkan cache build..."
 rm -rf app/build/
@@ -11,28 +17,14 @@ echo "Membersihkan cache Gradle..."
 echo "Pembersihan selesai."
 echo ""
 
-# --- Meminta Informasi Keystore Secara Interaktif ---
-echo "Silakan masukkan detail keystore untuk menandatangani aplikasi:"
-
-# 1. Meminta path keystore
-read -p "Masukkan path ke file keystore Anda: " KEYSTORE_PATH
-
 # Validasi sederhana untuk memeriksa apakah file ada
 if [ ! -f "$KEYSTORE_PATH" ]; then
     echo "Error: File keystore tidak ditemukan di '$KEYSTORE_PATH'"
     exit 1
 fi
 
-# 2. Meminta alias key
-read -p "Masukkan alias key Anda: " KEY_ALIAS
-
-# 3. Meminta password keystore (input disembunyikan)
-read -s -p "Masukkan password keystore Anda: " KEYSTORE_PASSWORD
-echo "" # Pindah ke baris baru setelah input password
-
-# 4. Meminta password key alias (input disembunyikan)
-read -s -p "Masukkan password untuk alias '$KEY_ALIAS': " KEY_PASSWORD
-echo "" # Pindah ke baris baru setelah input password
+echo "Menggunakan keystore: $KEYSTORE_PATH"
+echo "Key alias: $KEY_ALIAS"
 echo ""
 
 echo "Masukkan changelog untuk rilis ini (tekan Ctrl+D setelah selesai):"
