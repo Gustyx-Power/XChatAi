@@ -46,21 +46,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import id.xms.xcai.ui.theme.Web3Cyan
+import id.xms.xcai.ui.theme.Web3Slate
+import id.xms.xcai.ui.theme.Web3TextPrimary
+import id.xms.xcai.ui.theme.Web3TextSecondary
 import kotlinx.coroutines.delay
 
 /**
- * Animated thinking indicator shown while AI is processing
- * Shows a card with brain icon, "Thinking..." text, and animated dashed line
+ * Animated thinking indicator shown while AI is processing Shows a card with brain icon,
+ * "Thinking..." text, and animated dashed line
  */
 @Composable
-fun AIThinkingIndicator(
-    modifier: Modifier = Modifier
-) {
+fun AIThinkingIndicator(modifier: Modifier = Modifier) {
     val isDark = isSystemInDarkTheme()
     var elapsedSeconds by remember { mutableIntStateOf(0) }
 
@@ -74,91 +75,79 @@ fun AIThinkingIndicator(
 
     // Animated dashed line
     val infiniteTransition = rememberInfiniteTransition(label = "thinking_animation")
-    val animatedOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 20f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "dash_animation"
-    )
+    val animatedOffset by
+            infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 20f,
+                    animationSpec =
+                            infiniteRepeatable(
+                                    animation = tween(1000, easing = LinearEasing),
+                                    repeatMode = RepeatMode.Restart
+                            ),
+                    label = "dash_animation"
+            )
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = if (isDark) {
-            Color(0xFF1E1E1E).copy(alpha = 0.6f)
-        } else {
-            Color(0xFFF8F9FA).copy(alpha = 0.9f)
-        },
-        border = BorderStroke(
-            width = 1.dp,
-            brush = Brush.linearGradient(
-                colors = if (isDark) {
-                    listOf(
-                        Color(0xFF8AB4F8).copy(alpha = 0.3f),
-                        Color(0xFF4285F4).copy(alpha = 0.3f)
-                    )
-                } else {
-                    listOf(
-                        Color(0xFF4285F4).copy(alpha = 0.3f),
-                        Color(0xFF1A73E8).copy(alpha = 0.3f)
-                    )
-                }
-            )
-        ),
-        shadowElevation = 2.dp
+            modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = Web3Slate.copy(alpha = 0.6f),
+            border =
+                    BorderStroke(
+                            width = 1.dp,
+                            brush =
+                                    Brush.linearGradient(
+                                            colors =
+                                                    listOf(
+                                                            Web3Cyan.copy(alpha = 0.3f),
+                                                            Web3Cyan.copy(alpha = 0.1f)
+                                                    )
+                                    )
+                    ),
+            shadowElevation = 2.dp
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
         ) {
             // Brain icon with gradient background
             Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = if (isDark) {
-                                listOf(Color(0xFF8AB4F8), Color(0xFF4285F4))
-                            } else {
-                                listOf(Color(0xFF4285F4), Color(0xFF1A73E8))
-                            }
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "🧠", fontSize = 18.sp)
-            }
+                    modifier =
+                            Modifier.size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                            brush =
+                                                    Brush.linearGradient(
+                                                            colors =
+                                                                    listOf(
+                                                                            Web3Cyan,
+                                                                            Web3Cyan.copy(
+                                                                                    alpha = 0.7f
+                                                                            )
+                                                                    )
+                                                    )
+                                    ),
+                    contentAlignment = Alignment.Center
+            ) { Text(text = "🧠", fontSize = 18.sp) }
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Thinking...",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isDark) Color(0xFF8AB4F8) else Color(0xFF1A73E8)
+                            text = "Thinking...",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Web3Cyan
                     )
 
                     // Elapsed time
+
                     Text(
-                        text = formatElapsedTime(elapsedSeconds),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isDark) {
-                            Color.White.copy(alpha = 0.5f)
-                        } else {
-                            Color.Black.copy(alpha = 0.5f)
-                        }
+                            text = formatElapsedTime(elapsedSeconds),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Web3TextSecondary
                     )
                 }
 
@@ -166,26 +155,21 @@ fun AIThinkingIndicator(
 
                 // Animated dashed line
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(2.dp)
-                        .drawBehind {
-                            val pathEffect = PathEffect.dashPathEffect(
-                                intervals = floatArrayOf(10f, 10f),
-                                phase = animatedOffset
-                            )
-                            drawLine(
-                                color = if (isDark) {
-                                    Color(0xFF8AB4F8).copy(alpha = 0.5f)
-                                } else {
-                                    Color(0xFF4285F4).copy(alpha = 0.5f)
-                                },
-                                start = Offset(0f, size.height / 2),
-                                end = Offset(size.width, size.height / 2),
-                                strokeWidth = 2f,
-                                pathEffect = pathEffect
-                            )
-                        }
+                        modifier =
+                                Modifier.fillMaxWidth().height(2.dp).drawBehind {
+                                    val pathEffect =
+                                            PathEffect.dashPathEffect(
+                                                    intervals = floatArrayOf(10f, 10f),
+                                                    phase = animatedOffset
+                                            )
+                                    drawLine(
+                                            color = Web3Cyan.copy(alpha = 0.5f),
+                                            start = Offset(0f, size.height / 2),
+                                            end = Offset(size.width, size.height / 2),
+                                            strokeWidth = 2f,
+                                            pathEffect = pathEffect
+                                    )
+                                }
                 )
             }
         }
@@ -193,144 +177,125 @@ fun AIThinkingIndicator(
 }
 
 /**
- * Static thinking card shown after AI finishes thinking
- * Displays the thought process with expand/collapse functionality
+ * Static thinking card shown after AI finishes thinking Displays the thought process with
+ * expand/collapse functionality
  */
 @Composable
-fun ThinkingCard(
-    thinking: String,
-    modifier: Modifier = Modifier
-) {
+fun ThinkingCard(thinking: String, modifier: Modifier = Modifier) {
     val isDark = isSystemInDarkTheme()
     var isExpanded by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .animateContentSize(),
-        shape = RoundedCornerShape(16.dp),
-        color = if (isDark) {
-            Color(0xFF1E1E1E).copy(alpha = 0.6f)
-        } else {
-            Color(0xFFF8F9FA).copy(alpha = 0.9f)
-        },
-        border = BorderStroke(
-            width = 1.dp,
-            brush = Brush.linearGradient(
-                colors = if (isDark) {
-                    listOf(
-                        Color(0xFF8AB4F8).copy(alpha = 0.3f),
-                        Color(0xFF4285F4).copy(alpha = 0.3f)
-                    )
-                } else {
-                    listOf(
-                        Color(0xFF4285F4).copy(alpha = 0.3f),
-                        Color(0xFF1A73E8).copy(alpha = 0.3f)
-                    )
-                }
-            )
-        ),
-        shadowElevation = 2.dp
+            modifier =
+                    modifier.fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .animateContentSize(),
+            shape = RoundedCornerShape(16.dp),
+            color = Web3Slate.copy(alpha = 0.6f),
+            border =
+                    BorderStroke(
+                            width = 1.dp,
+                            brush =
+                                    Brush.linearGradient(
+                                            colors =
+                                                    listOf(
+                                                            Web3Cyan.copy(alpha = 0.3f),
+                                                            Web3Cyan.copy(alpha = 0.1f)
+                                                    )
+                                    )
+                    ),
+            shadowElevation = 2.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isExpanded = !isExpanded }
-                .padding(16.dp)
+                modifier =
+                        Modifier.fillMaxWidth()
+                                .clickable { isExpanded = !isExpanded }
+                                .padding(16.dp)
         ) {
             // Header
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Brain icon
                     Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = if (isDark) {
-                                        listOf(Color(0xFF8AB4F8), Color(0xFF4285F4))
-                                    } else {
-                                        listOf(Color(0xFF4285F4), Color(0xFF1A73E8))
-                                    }
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🧠", fontSize = 18.sp)
-                    }
+                            modifier =
+                                    Modifier.size(32.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(
+                                                    brush =
+                                                            Brush.linearGradient(
+                                                                    colors =
+                                                                            listOf(
+                                                                                    Web3Cyan,
+                                                                                    Web3Cyan.copy(
+                                                                                            alpha =
+                                                                                                    0.7f
+                                                                                    )
+                                                                            )
+                                                            )
+                                            ),
+                            contentAlignment = Alignment.Center
+                    ) { Text(text = "🧠", fontSize = 18.sp) }
 
                     Text(
-                        text = "Thought Process",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isDark) Color(0xFF8AB4F8) else Color(0xFF1A73E8)
+                            text = "Thought Process",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Web3Cyan
                     )
                 }
 
                 // Expand/Collapse icon
                 Icon(
-                    imageVector = if (isExpanded) {
-                        Icons.Default.KeyboardArrowUp
-                    } else {
-                        Icons.Default.KeyboardArrowDown
-                    },
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = if (isDark) Color(0xFF8AB4F8) else Color(0xFF4285F4),
-                    modifier = Modifier.size(24.dp)
+                        imageVector =
+                                if (isExpanded) {
+                                    Icons.Default.KeyboardArrowUp
+                                } else {
+                                    Icons.Default.KeyboardArrowDown
+                                },
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = Web3Cyan,
+                        modifier = Modifier.size(24.dp)
                 )
             }
 
             // Dashed line separator
             Spacer(modifier = Modifier.height(12.dp))
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.dp)
-                    .drawBehind {
-                        val pathEffect = PathEffect.dashPathEffect(
-                            intervals = floatArrayOf(10f, 10f),
-                            phase = 0f
-                        )
-                        drawLine(
-                            color = if (isDark) {
-                                Color(0xFF8AB4F8).copy(alpha = 0.5f)
-                            } else {
-                                Color(0xFF4285F4).copy(alpha = 0.5f)
-                            },
-                            start = Offset(0f, size.height / 2),
-                            end = Offset(size.width, size.height / 2),
-                            strokeWidth = 2f,
-                            pathEffect = pathEffect
-                        )
-                    }
+                    modifier =
+                            Modifier.fillMaxWidth().height(2.dp).drawBehind {
+                                val pathEffect =
+                                        PathEffect.dashPathEffect(
+                                                intervals = floatArrayOf(10f, 10f),
+                                                phase = 0f
+                                        )
+                                drawLine(
+                                        color = Web3Cyan.copy(alpha = 0.5f),
+                                        start = Offset(0f, size.height / 2),
+                                        end = Offset(size.width, size.height / 2),
+                                        strokeWidth = 2f,
+                                        pathEffect = pathEffect
+                                )
+                            }
             )
 
             // Expandable content
             AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
+                    visible = isExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
             ) {
                 Text(
-                    text = thinking,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        lineHeight = 22.sp
-                    ),
-                    color = if (isDark) {
-                        Color.White.copy(alpha = 0.85f)
-                    } else {
-                        Color(0xFF202124).copy(alpha = 0.85f)
-                    },
-                    modifier = Modifier.padding(top = 12.dp)
+                        text = thinking,
+                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
+                        color = Web3TextPrimary.copy(alpha = 0.85f),
+                        modifier = Modifier.padding(top = 12.dp)
                 )
             }
 
@@ -338,23 +303,17 @@ fun ThinkingCard(
             if (!isExpanded) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = thinking.lines().firstOrNull()?.take(80) ?: "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isDark) {
-                        Color.White.copy(alpha = 0.5f)
-                    } else {
-                        Color.Black.copy(alpha = 0.5f)
-                    },
-                    maxLines = 1
+                        text = thinking.lines().firstOrNull()?.take(80) ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Web3TextSecondary,
+                        maxLines = 1
                 )
             }
         }
     }
 }
 
-/**
- * Format elapsed seconds into readable time string
- */
+/** Format elapsed seconds into readable time string */
 private fun formatElapsedTime(seconds: Int): String {
     return when {
         seconds < 60 -> "${seconds}s"
@@ -371,72 +330,48 @@ private fun formatElapsedTime(seconds: Int): String {
     }
 }
 
-/**
- * Old AITypingIndicator - kept for backward compatibility
- */
+/** Old AITypingIndicator - kept for backward compatibility */
 @Composable
-fun AITypingIndicator(
-    modifier: Modifier = Modifier
-) {
+fun AITypingIndicator(modifier: Modifier = Modifier) {
     val isDark = isSystemInDarkTheme()
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 60.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.Start
+            modifier = modifier.fillMaxWidth().padding(horizontal = 60.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.Start
     ) {
         Surface(
-            shape = RoundedCornerShape(18.dp),
-            color = if (isDark) {
-                Color(0xFF2D2D2D).copy(alpha = 0.8f)
-            } else {
-                Color(0xFFF0F0F0).copy(alpha = 0.9f)
-            },
-            shadowElevation = 1.dp
+                shape = RoundedCornerShape(18.dp),
+                color = Web3Slate.copy(alpha = 0.8f),
+                shadowElevation = 1.dp
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                repeat(3) { index ->
-                    TypingDot(
-                        delay = index * 150,
-                        isDark = isDark
-                    )
-                }
-            }
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+            ) { repeat(3) { index -> TypingDot(delay = index * 150, isDark = isDark) } }
         }
     }
 }
 
 @Composable
-private fun TypingDot(
-    delay: Int,
-    isDark: Boolean
-) {
+private fun TypingDot(delay: Int, isDark: Boolean) {
     val infiniteTransition = rememberInfiniteTransition(label = "typing")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 600,
-                delayMillis = delay,
-                easing = LinearEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
-
-    Box(
-        modifier = Modifier
-            .size(8.dp * scale)
-            .clip(RoundedCornerShape(50))
-            .background(
-                if (isDark) Color(0xFF8AB4F8) else Color(0xFF4285F4)
+    val scale by
+            infiniteTransition.animateFloat(
+                    initialValue = 1f,
+                    targetValue = 1.5f,
+                    animationSpec =
+                            infiniteRepeatable(
+                                    animation =
+                                            tween(
+                                                    durationMillis = 600,
+                                                    delayMillis = delay,
+                                                    easing = LinearEasing
+                                            ),
+                                    repeatMode = RepeatMode.Reverse
+                            ),
+                    label = "scale"
             )
-    )
+
+    Box(modifier = Modifier.size(8.dp * scale).clip(RoundedCornerShape(50)).background(Web3Cyan))
 }
