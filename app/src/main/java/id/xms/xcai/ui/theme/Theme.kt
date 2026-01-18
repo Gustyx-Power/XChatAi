@@ -69,8 +69,9 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun XChatAiTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = true, // Default to true for Web3 aesthetic
+    // Dynamic color is available on Android 12+
+    dynamicColor: Boolean = false, // Disable dynamic color to enforce our Web3 palette
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -79,22 +80,21 @@ fun XChatAiTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        else -> LightColorScheme // Fallback, though we prefer Dark
     }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // Set navigation bar and status bar colors
-            window.navigationBarColor = colorScheme.surface.toArgb()
-            window.statusBarColor = colorScheme.surface.toArgb()
+            // Set navigation bar and status bar colors to background color for immersive feel
+            window.statusBarColor = colorScheme.background.toArgb()
+            window.navigationBarColor = colorScheme.background.toArgb()
 
-            // Update the system bars appearance
-            WindowCompat.setDecorFitsSystemWindows(window, false)
             val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = !darkTheme
-            insetsController.isAppearanceLightNavigationBars = !darkTheme
+            // Always set light status bars to false (meaning text is light) because we are dark themed
+            insetsController.isAppearanceLightStatusBars = false
+            insetsController.isAppearanceLightNavigationBars = false
         }
     }
 
