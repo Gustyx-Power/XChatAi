@@ -166,4 +166,35 @@
     <string name="developer_role">Intermediate Android Apps &amp; Tools Developer</string>
     <string name="visit_portfolio">Visit My Portfolio</string>
     <string name="portfolio_info">Check out my projects and contact info</string>
+    
+    <!-- Welcome Screen -->
+    <string name="welcome_title">Welcome to XChat AI</string>
+    <string name="welcome_subtitle">Fluid. Intelligent.</string>
+    <string-array name="welcome_prompts">
+        <item>Analyze this image 🖼️</item>
+        <item>Write a smart contract 📜</item>
+        <item>Explain quantum physics ⚛️</item>
+        <item>Debug this code snippet 🐛</item>
+        <item>Generate a poem about space 🚀</item>
+        <item>Translate this text to Spanish 🇪🇸</item>
+        <item>Summarize this article 📝</item>
+        <item>Create a workout plan 💪</item>
+        <item>Suggest a dinner recipe 🍳</item>
+        <item>Write a Python script 🐍</item>
+        <item>Explain blockchain basics 🔗</item>
+        <item>Compose an email draft 📧</item>
+        <item>Solve this math problem ➗</item>
+        <item>Give me travel tips ✈️</item>
+        <item>Recommend a book 📚</item>
+        <item>Write a song lyric 🎵</item>
+        <item>Explain machine learning 🤖</item>
+        <item>Create a marketing slogan 📢</item>
+        <item>Write a SQL query 🗄️</item>
+        <item>Plan a weekend trip 🗺️</item>
+        <item>How to make coffee ☕</item>
+        <item>Explain photosynthesis 🌿</item>
+        <item>Write a React component ⚛️</item>
+        <item>Give me a movie recommendation 🎬</item>
+        <item>Explain relativity theory 🌌</item>
+    </string-array>
 </resources>
