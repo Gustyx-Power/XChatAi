@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.File
 
 data class ChatUiState(
     val messages: List<ChatEntity> = emptyList(),
@@ -37,7 +38,11 @@ data class ChatUiState(
     val isThinking: Boolean = false,
     val currentResponseMode: ResponseMode = ResponseMode.CHAT,
     val selectedImageUri: String? = null,  // For image preview
-    val selectedImageBase64: String? = null // For sending to API
+    val selectedImageBase64: String? = null, // For sending to API
+    // STT State
+    val isRecording: Boolean = false,
+    val isTranscribing: Boolean = false,
+    val transcribedText: String? = null
 )
 
 data class ConversationUiState(
@@ -827,5 +832,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         } catch (e: Exception) {
             Log.e("ChatViewModel", "Error in onCleared: ${e.message}")
         }
+    }
+
+    // ====== Speech-to-Text State (using Android SpeechRecognizer in UI) ======
+
+    fun setRecording(isRecording: Boolean) {
+        _chatUiState.value = _chatUiState.value.copy(isRecording = isRecording)
+    }
+
+    fun clearTranscribedText() {
+        _chatUiState.value = _chatUiState.value.copy(transcribedText = null)
     }
 }

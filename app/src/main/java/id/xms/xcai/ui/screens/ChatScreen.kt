@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
@@ -84,6 +85,7 @@ import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import id.xms.xcai.R
 import id.xms.xcai.data.local.ChatEntity
+import id.xms.xcai.data.util.SpeechRecognizerHelper
 import id.xms.xcai.data.util.DocumentReader
 import id.xms.xcai.ui.components.AIThinkingIndicator
 import id.xms.xcai.ui.components.AITypingIndicator
@@ -104,6 +106,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.draw.scale
+import androidx.compose.material3.CircularProgressIndicator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -197,9 +209,62 @@ fun ChatScreen(
     var showImageSourceSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
+    // Speech Recognition state (STT) - using Android's built-in SpeechRecognizer
+    var isRecording by remember { mutableStateOf(false) }
+    var sttError by remember { mutableStateOf<String?>(null) }
+    
+    // Speech recognizer helper
+    val speechRecognizerHelper = remember {
+        SpeechRecognizerHelper(
+            context = context,
+            onResult = { transcribedText ->
+                // Directly set the message text
+                messageText = transcribedText
+                isRecording = false
+                chatViewModel.setRecording(false)
+            },
+            onError = { errorMessage ->
+                sttError = errorMessage
+                isRecording = false
+                chatViewModel.setRecording(false)
+            },
+            onListening = { listening ->
+                isRecording = listening
+                chatViewModel.setRecording(listening)
+            }
+        )
+    }
+    
+    // Show STT error as snackbar
+    LaunchedEffect(sttError) {
+        sttError?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            sttError = null
+        }
+    }
+    
+    // Permission launcher for RECORD_AUDIO
+    val audioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Start speech recognition when permission granted
+            speechRecognizerHelper.startListening("id-ID")
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar("Izin mikrofon diperlukan untuk fitur voice input")
+            }
+        }
+    }
+
     LaunchedEffect(messageText) { chatViewModel.setUserTyping(messageText.isNotEmpty()) }
 
-    DisposableEffect(Unit) { onDispose { chatViewModel.setUserTyping(false) } }
+    DisposableEffect(Unit) { 
+        onDispose { 
+            chatViewModel.setUserTyping(false) 
+            speechRecognizerHelper.cancel()
+        } 
+    }
 
     LaunchedEffect(chatUiState.remainingRequests, chatUiState.isLoadingCounter) {
         if (!chatUiState.isLoadingCounter &&
@@ -462,7 +527,26 @@ fun ChatScreen(
                             },
                             imageUri =
                                     chatUiState.selectedImageUri?.let { android.net.Uri.parse(it) },
-                            docName = selectedDocumentName
+                            docName = selectedDocumentName,
+                            // STT parameters
+                            isRecording = isRecording,
+                            isTranscribing = false, // Not used with SpeechRecognizer
+                            onMicClick = {
+                                // Check permission first
+                                val hasPermission = ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                                
+                                if (hasPermission) {
+                                    speechRecognizerHelper.startListening("id-ID")
+                                } else {
+                                    audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                            },
+                            onStopRecording = {
+                                speechRecognizerHelper.stopListening()
+                            }
                     )
                 }
 
@@ -865,13 +949,32 @@ private fun FloatingInputBar(
         onClearImage: () -> Unit,
         onClearDoc: () -> Unit,
         imageUri: Uri?,
-        docName: String?
+        docName: String?,
+        // STT parameters
+        isRecording: Boolean = false,
+        isTranscribing: Boolean = false,
+        onMicClick: () -> Unit = {},
+        onStopRecording: () -> Unit = {}
 ) {
     val isDark = isSystemInDarkTheme()
+    
+    // Pulsing animation for recording
+    val pulseScale by animateFloatAsState(
+        targetValue = if (isRecording) 1.2f else 1f,
+        animationSpec = if (isRecording) {
+            infiniteRepeatable(
+                animation = tween(500),
+                repeatMode = RepeatMode.Reverse
+            )
+        } else {
+            tween(200)
+        },
+        label = "pulseScale"
+    )
 
     GlassCard(
             backgroundColor = Web3Slate.copy(alpha = 0.9f),
-            borderColor = Web3Cyan.copy(alpha = 0.3f),
+            borderColor = if (isRecording) Color(0xFFEA4335).copy(alpha = 0.5f) else Web3Cyan.copy(alpha = 0.3f),
             shape = RoundedCornerShape(28.dp),
             elevation = 8.dp
     ) {
@@ -932,6 +1035,61 @@ private fun FloatingInputBar(
                     }
                 }
             }
+            
+            // Recording indicator
+            if (isRecording) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFEA4335).copy(alpha = 0.2f),
+                    modifier = Modifier.padding(bottom = 8.dp).fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .scale(pulseScale)
+                                .background(Color(0xFFEA4335), CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Merekam... Tap mikrofon untuk berhenti",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFEA4335)
+                        )
+                    }
+                }
+            }
+            
+            // Transcribing indicator  
+            if (isTranscribing) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Web3Cyan.copy(alpha = 0.2f),
+                    modifier = Modifier.padding(bottom = 8.dp).fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = Web3Cyan
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Mentranskrip audio...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Web3Cyan
+                        )
+                    }
+                }
+            }
 
             // Input Row
             Row(
@@ -950,6 +1108,7 @@ private fun FloatingInputBar(
                             placeholder = {
                                 Text(
                                         if (hasImage) stringResource(R.string.describe_image)
+                                        else if (isRecording) "Merekam..."
                                         else stringResource(R.string.ask_me_anything),
                                         color = Web3TextSecondary
                                 )
@@ -967,6 +1126,30 @@ private fun FloatingInputBar(
                                             cursorColor = Web3Cyan
                                     )
                     )
+                }
+                
+                // Microphone Button
+                Surface(
+                    onClick = { if (isRecording) onStopRecording() else onMicClick() },
+                    shape = CircleShape,
+                    color = if (isRecording) Color(0xFFEA4335) else Web3Slate,
+                    modifier = Modifier.size(48.dp).scale(if (isRecording) pulseScale else 1f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (isTranscribing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = Web3Cyan
+                            )
+                        } else {
+                            Icon(
+                                if (isRecording) Icons.Default.Stop else Icons.Default.Mic, 
+                                if (isRecording) "Stop Recording" else "Voice Input",
+                                tint = if (isRecording) Color.White else Web3Cyan
+                            )
+                        }
+                    }
                 }
 
                 // Send Button

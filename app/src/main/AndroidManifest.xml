@@ -27,6 +27,9 @@
     <!-- APK Installation Permission (for update feature) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Audio Recording Permission (for Speech-to-Text) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- ============================================ -->
     <!-- APPLICATION                                   -->
     <!-- ============================================ -->
