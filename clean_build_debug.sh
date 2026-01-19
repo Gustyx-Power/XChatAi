@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Detect OS and define nproc helper
+get_nproc() {
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        sysctl -n hw.ncpu
+    else
+        nproc
+    fi
+}
+
 echo "Mendeteksi perangkat Android yang terhubung..."
 DEVICES=($(adb devices | awk 'NR>1 && $2=="device" {print $1}'))
 COUNT=${#DEVICES[@]}
@@ -47,7 +56,10 @@ echo "Membersihkan cache Gradle..."
 ./gradlew clean
 
 echo "Melakukan build debug yang bersih..."
-./gradlew assembleDebug --parallel --max-workers=$(nproc)
+# Use cross-platform CPU count
+CORES=$(get_nproc)
+echo "Using $CORES cores for build."
+./gradlew assembleDebug --parallel --max-workers=$CORES
 
 APK_PATH=$(find app/build/outputs/apk/debug -name '*.apk' | head -n 1)
 if [ -f "$APK_PATH" ]; then

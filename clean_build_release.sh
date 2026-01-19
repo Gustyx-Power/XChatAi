@@ -1,7 +1,18 @@
 #!/bin/bash
 
-# --- Konfigurasi Keystore (Hardcoded) ---
-KEYSTORE_PATH="/home/gustyxpower/Documents/Project/XMS/Keystore/Keystore-XCAI/xcai-key.jks"
+# --- Konfigurasi Keystore (Dynamic) ---
+# Check common locations or use env var
+if [ -n "$XMS_KEYSTORE_PATH" ]; then
+    KEYSTORE_PATH="$XMS_KEYSTORE_PATH"
+elif [ -f "$HOME/Documents/Project/XMS/xcai-key.jks" ]; then
+    KEYSTORE_PATH="$HOME/Documents/Project/XMS/xcai-key.jks"
+elif [ -f "./xcai-key.jks" ]; then
+    KEYSTORE_PATH="./xcai-key.jks"
+else
+    # Fallback to the old hardcoded path if it exists, otherwise error
+    KEYSTORE_PATH="/Users/gustyx-macos/Documents/Project/XMS/xcai-key.jks"
+fi
+
 KEY_ALIAS="xcaikey"
 KEYSTORE_PASSWORD="gusti717"
 KEY_PASSWORD="gusti717"
@@ -19,7 +30,9 @@ echo ""
 
 # Validasi sederhana untuk memeriksa apakah file ada
 if [ ! -f "$KEYSTORE_PATH" ]; then
-    echo "Error: File keystore tidak ditemukan di '$KEYSTORE_PATH'"
+    echo "Error: File keystore tidak ditemukan."
+    echo "Dicari di: $KEYSTORE_PATH"
+    echo "Pastikan file keystore ada di lokasi tersebut atau set env var XMS_KEYSTORE_PATH."
     exit 1
 fi
 
