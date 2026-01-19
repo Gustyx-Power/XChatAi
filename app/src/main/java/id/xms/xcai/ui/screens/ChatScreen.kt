@@ -95,6 +95,7 @@ import id.xms.xcai.ui.components.StreamingMessageItem
 import id.xms.xcai.ui.theme.Web3Black
 import id.xms.xcai.ui.theme.Web3Cyan
 import id.xms.xcai.ui.theme.Web3MidnightBlue
+import id.xms.xcai.ui.theme.Web3Purple
 import id.xms.xcai.ui.theme.Web3Slate
 import id.xms.xcai.ui.theme.Web3TextPrimary
 import id.xms.xcai.ui.theme.Web3TextSecondary
@@ -381,6 +382,17 @@ fun ChatScreen(
                     ) {
                         item(key = "typing_indicator") { AITypingIndicator() }
                     }
+
+                    if (chatUiState.isSearching) {
+                        item(key = "search_indicator") {
+                            SearchProgressIndicator(
+                                searchedSites = chatUiState.searchedSites,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
                 }
 
                 // 2. Floating Header
@@ -546,9 +558,14 @@ fun ChatScreen(
                             },
                             onStopRecording = {
                                 speechRecognizerHelper.stopListening()
-                            }
+                            },
+                            // Chat Mode
+                            currentChatMode = chatUiState.currentChatMode,
+                            onModeChange = { mode -> chatViewModel.setChatMode(mode) }
                     )
                 }
+
+
 
                 // Document Toast (Overlay)
                 if (showDocumentToast) {
@@ -954,7 +971,10 @@ private fun FloatingInputBar(
         isRecording: Boolean = false,
         isTranscribing: Boolean = false,
         onMicClick: () -> Unit = {},
-        onStopRecording: () -> Unit = {}
+        onStopRecording: () -> Unit = {},
+        // Chat Mode parameters
+        currentChatMode: id.xms.xcai.data.model.ChatMode = id.xms.xcai.data.model.ChatMode.CHAT,
+        onModeChange: (id.xms.xcai.data.model.ChatMode) -> Unit = {}
 ) {
     val isDark = isSystemInDarkTheme()
     
@@ -1087,6 +1107,42 @@ private fun FloatingInputBar(
                             style = MaterialTheme.typography.bodySmall,
                             color = Web3Cyan
                         )
+                    }
+                }
+            }
+
+            // Chat Mode Selector Chips
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                id.xms.xcai.data.model.ChatMode.entries.forEach { mode ->
+                    val isSelected = currentChatMode == mode
+                    Surface(
+                        onClick = { onModeChange(mode) },
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (isSelected) Web3Cyan.copy(alpha = 0.2f) else Color.Transparent,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isSelected) Web3Cyan else Web3TextSecondary.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = mode.icon,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = stringResource(mode.labelResId),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isSelected) Web3Cyan else Web3TextSecondary,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        }
                     }
                 }
             }
@@ -1278,6 +1334,58 @@ private fun SuggestionChip(text: String, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = text, style = MaterialTheme.typography.bodyMedium, color = Web3TextPrimary)
+        }
+    }
+}
+
+@Composable
+fun SearchProgressIndicator(
+    searchedSites: List<String>,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = Web3Black.copy(alpha = 0.9f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Web3Cyan.copy(alpha = 0.3f)),
+        shadowElevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = Web3Cyan,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Mencari di web...",
+                    color = Web3Cyan,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            // Show up to 3 sites
+            searchedSites.filter { !it.contains("mencari") && !it.contains("Searching") }.take(3).forEach { site ->
+                 Row(verticalAlignment = Alignment.CenterVertically) {
+                     Icon(
+                         imageVector = Icons.Default.CheckCircle,
+                         contentDescription = null,
+                         tint = Web3Purple,
+                         modifier = Modifier.size(14.dp)
+                     )
+                     Spacer(modifier = Modifier.width(6.dp))
+                     Text(
+                        text = site,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                     )
+                 }
+            }
         }
     }
 }

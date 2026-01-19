@@ -25,8 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.xms.xcai.BuildConfig
 import id.xms.xcai.R
-import id.xms.xcai.data.model.GroqModel
-import id.xms.xcai.data.model.ResponseMode
 import id.xms.xcai.ui.viewmodel.SettingsViewModel
 import id.xms.xcai.utils.BackupManager
 import kotlinx.coroutines.launch
@@ -39,10 +37,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val isDark = isSystemInDarkTheme()
-    val selectedModelId by settingsViewModel.selectedModelId.collectAsState()
-    val selectedResponseMode by settingsViewModel.responseMode.collectAsState() // ← NEW
-    val customPrompt by settingsViewModel.customPrompt.collectAsState()
-
+    // Model selection moved to ChatScreen and managed by ChatViewModel
+    
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -51,9 +47,6 @@ fun SettingsScreen(
     var isBackupInProgress by remember { mutableStateOf(false) }
     var isRestoreInProgress by remember { mutableStateOf(false) }
     
-    // Custom prompt editor dialog
-    var showCustomPromptDialog by remember { mutableStateOf(false) }
-    var editingCustomPrompt by remember { mutableStateOf("") }
 
     // Handle system back gesture/button
     BackHandler {
@@ -117,123 +110,7 @@ fun SettingsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Response Mode Section (NEW - PLACED FIRST)
-                item {
-                    SectionCard(isDark = isDark) {
-                        Column {
-                            SectionHeader(
-                                icon = Icons.Default.FormatListBulleted,
-                                text = stringResource(R.string.response_mode),
-                                isDark = isDark
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = stringResource(R.string.response_mode_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isDark) {
-                                    Color.White.copy(alpha = 0.7f)
-                                } else {
-                                    Color.Black.copy(alpha = 0.7f)
-                                },
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            ResponseMode.entries.forEachIndexed { index, mode ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    ResponseModeItem(
-                                        mode = mode,
-                                        isSelected = mode == selectedResponseMode,
-                                        isDark = isDark,
-                                        onClick = { settingsViewModel.setResponseMode(mode) },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    
-                                    // Edit button for CUSTOM mode
-                                    if (mode == ResponseMode.CUSTOM && mode == selectedResponseMode) {
-                                        IconButton(
-                                            onClick = {
-                                                editingCustomPrompt = customPrompt
-                                                showCustomPromptDialog = true
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Edit,
-                                                contentDescription = stringResource(R.string.edit),
-                                                tint = Color(0xFF4285F4)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                if (index < ResponseMode.entries.size - 1) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                        color = if (isDark) {
-                                            Color.White.copy(alpha = 0.1f)
-                                        } else {
-                                            Color.Black.copy(alpha = 0.1f)
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // AI Model Section
-                item {
-                    SectionCard(isDark = isDark) {
-                        Column {
-                            SectionHeader(
-                                icon = Icons.Default.Psychology,
-                                text = stringResource(R.string.ai_model),
-                                isDark = isDark
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = stringResource(R.string.ai_model_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isDark) {
-                                    Color.White.copy(alpha = 0.7f)
-                                } else {
-                                    Color.Black.copy(alpha = 0.7f)
-                                },
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            GroqModel.availableModels.forEachIndexed { index, model ->
-                                ModelItem(
-                                    model = model,
-                                    isSelected = model.id == selectedModelId,
-                                    isDark = isDark,
-                                    onClick = { settingsViewModel.setSelectedModel(model.id) }
-                                )
-
-                                if (index < GroqModel.availableModels.size - 1) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                        color = if (isDark) {
-                                            Color.White.copy(alpha = 0.1f)
-                                        } else {
-                                            Color.Black.copy(alpha = 0.1f)
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                // Data Management Section
 
                 // Data Management Section
                 item {
@@ -393,66 +270,7 @@ fun SettingsScreen(
             }
         )
     }
-    
-    // Custom Prompt Editor Dialog
-    if (showCustomPromptDialog) {
-        AlertDialog(
-            onDismissRequest = { showCustomPromptDialog = false },
-            icon = {
-                Text("✨", fontSize = 32.sp)
-            },
-            title = {
-                Text(
-                    stringResource(R.string.custom_prompt),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        stringResource(R.string.custom_prompt_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    OutlinedTextField(
-                        value = editingCustomPrompt,
-                        onValueChange = { editingCustomPrompt = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        label = { Text(stringResource(R.string.enter_custom_prompt)) },
-                        placeholder = { Text("Example: Act as a friendly mentor...") },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4285F4),
-                            unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.3f)
-                        )
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        settingsViewModel.setCustomPrompt(editingCustomPrompt)
-                        showCustomPromptDialog = false
-                        scope.launch {
-                            snackbarHostState.showSnackbar(context.getString(R.string.custom_prompt_saved))
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4))
-                ) {
-                    Text(stringResource(R.string.save))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCustomPromptDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
-    }
+
 }
 
 @Composable
@@ -515,150 +333,7 @@ private fun SectionHeader(
     }
 }
 
-// NEW: Response Mode Item Composable
-@Composable
-private fun ResponseModeItem(
-    mode: ResponseMode,
-    isSelected: Boolean,
-    isDark: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = if (isSelected) {
-            Color(0xFF4285F4).copy(alpha = 0.15f)
-        } else {
-            Color.Transparent
-        },
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Emoji icon
-            Text(
-                text = mode.icon,
-                fontSize = 28.sp,
-                modifier = Modifier.size(40.dp)
-            )
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = mode.displayName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = if (isDark) Color.White else Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                Text(
-                    text = mode.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 12.sp,
-                    color = if (isDark) {
-                        Color.White.copy(alpha = 0.7f)
-                    } else {
-                        Color.Black.copy(alpha = 0.7f)
-                    }
-                )
-            }
-
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color(0xFF4285F4),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ModelItem(
-    model: GroqModel,
-    isSelected: Boolean,
-    isDark: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = if (isSelected) {
-            Color(0xFF4285F4).copy(alpha = 0.15f)
-        } else {
-            Color.Transparent
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            RadioButton(
-                selected = isSelected,
-                onClick = onClick,
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = Color(0xFF4285F4)
-                )
-            )
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = model.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = if (isDark) Color.White else Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "${model.developer} • ${model.contextWindow / 1024}K context",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isDark) {
-                        Color.White.copy(alpha = 0.7f)
-                    } else {
-                        Color.Black.copy(alpha = 0.7f)
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                Text(
-                    text = model.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 12.sp,
-                    color = if (isDark) {
-                        Color.White.copy(alpha = 0.6f)
-                    } else {
-                        Color.Black.copy(alpha = 0.6f)
-                    }
-                )
-            }
-
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color(0xFF4285F4),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun DataManagementItem(

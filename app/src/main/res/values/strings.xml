@@ -141,6 +141,14 @@
     <string name="edit">Edit</string>
     <string name="save">Save</string>
     
+    <!-- Chat Mode -->
+    <string name="chat_mode_chat_label">Ngobrol</string>
+    <string name="chat_mode_chat_desc">Percakapan umum dengan Kimi K2</string>
+    <string name="chat_mode_code_label">Kode</string>
+    <string name="chat_mode_code_desc">Bantuan coding dengan GPT OSS</string>
+    <string name="chat_mode_quick_label">Cepat</string>
+    <string name="chat_mode_quick_desc">Jawaban cepat dengan Meta Ai</string>
+    
     <!-- Edit Message -->
     <string name="edit_message">Edit Message</string>
     <string name="edit_and_resend">Edit and Resend</string>

@@ -5,9 +5,9 @@ import androidx.compose.ui.graphics.Color
 // Web3 Clean Theme Colors
 val Web3Black = Color(0xFF050505) // Matte Black
 val Web3MidnightBlue = Color(0xFF0A0E17) // Deep Midnight Blue
-val Web3Cyan = Color(0xFF00F0FF) // Neon Cyan
-val Web3CyanDark = Color(0xFF008F99)
-val Web3Purple = Color(0xFF6200EA) // Deep Purple (Accent)
+val Web3Cyan = Color(0xFF80DEEA) // Soft Cyan (was Neon #00F0FF)
+val Web3CyanDark = Color(0xFF4DD0E1) // Muted Cyan (was #008F99)
+val Web3Purple = Color(0xFFB39DDB) // Soft Lavender (was #6200EA)
 val Web3Slate = Color(0xFF1E2230) // Slate Blue/Grey for surfaces
 val Web3TextPrimary = Color(0xFFFFFFFF)
 val Web3TextSecondary = Color(0xFFB0B3C6)
