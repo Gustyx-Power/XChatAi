@@ -39,6 +39,14 @@
           }
         },
         {
+          "client_id": "1023109162505-id94mb6fkl07vt23ckcid40iluopj5up.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.xms.xcai",
+            "certificate_hash": "a16d50f70c6f1341000fdfdddd3c91d4a123ad66"
+          }
+        },
+        {
           "client_id": "1023109162505-lh5o4rrrteafr8sjifno3jsner40ao05.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

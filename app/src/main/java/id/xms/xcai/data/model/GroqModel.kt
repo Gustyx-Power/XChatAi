@@ -39,17 +39,10 @@ data class GroqModel(
             ),
             GroqModel(
                 id = "openai/gpt-oss-120b",
-                name = "ChatGPT o4-mini",
+                name = "GPT OSS 120B",
                 developer = "OpenAI",
                 contextWindow = 131072,
-                description = "OpenAI's flagship open-weight model with o4-mini parameters"
-            ),
-            GroqModel(
-                id = "openai/gpt-oss-20b",
-                name = "ChatGPT o3-mini",
-                developer = "OpenAI",
-                contextWindow = 131072,
-                description = "Efficient OpenAI model with o3-mini parameters"
+                description = "OpenAI's flagship open-weight model with 120B parameters"
             ),
             GroqModel(
                 id = "meta-llama/llama-guard-4-12b",

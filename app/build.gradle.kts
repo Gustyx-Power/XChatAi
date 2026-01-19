@@ -27,7 +27,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "1.2"
+        versionName = "1.3-Dev"
     }
 
     signingConfigs {
@@ -143,6 +143,8 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
+    // Jsoup for Web Scraping
+    implementation("org.jsoup:jsoup:1.17.2")
 }
 
 
