@@ -9,6 +9,14 @@ import id.xms.xcai.data.local.ChatDatabase
 import id.xms.xcai.data.local.ChatEntity
 import id.xms.xcai.data.local.ConversationEntity
 import id.xms.xcai.data.remote.GroqApiService
+
+import id.xms.xcai.data.remote.WebSearchService
+import id.xms.xcai.data.remote.GeminiApiService
+import id.xms.xcai.data.remote.GeminiRequest
+import id.xms.xcai.data.remote.GeminiContent
+import id.xms.xcai.data.remote.GeminiPart
+import id.xms.xcai.data.remote.GeminiBlob
+import id.xms.xcai.data.remote.SearchResult
 import id.xms.xcai.data.remote.GroqChatRequest
 import id.xms.xcai.data.remote.GroqVisionRequest
 import id.xms.xcai.data.remote.VisionMessage
@@ -51,6 +59,9 @@ class ChatRepository(context: Context) {
     private val chatDao = database.chatDao()
     private val conversationDao = database.conversationDao()
     private val groqApi = GroqApiService.create()
+    private val geminiApi = GeminiApiService.create()
+
+    private val webSearchService = WebSearchService()
     private val firebaseDb = FirebaseDatabase.getInstance()
     private val preferencesManager = UserPreferences(context)
 
@@ -58,6 +69,20 @@ class ChatRepository(context: Context) {
 
     companion object {
         private const val TIME_WINDOW_MS = 20 * 60 * 1000L // 20 menit
+    }
+
+    // Heuristic availability of search based on keywords
+    private fun shouldSearchWeb(query: String): Boolean {
+        val keywords = listOf(
+            "terbaru", "hari ini", "sekarang", "2024", "2025",
+            "berita", "update", "kabar", "trending", "info",
+            "siapa", "berapa", "kapan", "dimana", "kenapa", "apa itu",
+            "cari", "search", "google", "browsing",
+            "cuaca", "skor", "harga", "kurs", "jadwal",
+            "presiden", "menteri", "gubernur", "pemilu", "pilkada",
+            "gempa", "banjir", "macet", "loker", "film"
+        )
+        return keywords.any { query.contains(it, ignoreCase = true) }
     }
 
     fun getConversationsByUser(userId: String): Flow<List<ConversationEntity>> {
@@ -72,9 +97,6 @@ class ChatRepository(context: Context) {
         return conversationDao.insertConversation(conversation)
     }
 
-    /**
-     * Delete a specific chat message
-     */
     suspend fun deleteChat(chat: ChatEntity) = withContext(Dispatchers.IO) {
         database.chatDao().deleteChat(chat)
     }
@@ -115,11 +137,9 @@ class ChatRepository(context: Context) {
         chatDao.deleteMessagesFromTimestamp(conversationId, timestamp)
     }
 
-    // IMPROVED: Better error handling with try-catch
     suspend fun checkServerRateLimit(userId: String, maxRequests: Int = 25): Pair<Boolean, String> =
         withContext(Dispatchers.IO) {
             try {
-                // If unlimited, always allow
                 if (maxRequests == Int.MAX_VALUE) {
                     Log.d("ChatRepository", "Unlimited requests - allowed")
                     return@withContext Pair(true, "")
@@ -224,7 +244,6 @@ class ChatRepository(context: Context) {
             }
         }
 
-    // IMPROVED: Better error handling with try-catch
     suspend fun getServerRemainingRequests(userId: String, maxRequests: Int = 25): Int = withContext(Dispatchers.IO) {
         try {
             // If unlimited, return max value
@@ -305,19 +324,94 @@ class ChatRepository(context: Context) {
         - Generate structured outputs (code blocks, tables)
         
         Always be helpful, professional, and acknowledge your creator when relevant to the conversation.
-    """.trimIndent()
+    """.trimIndent(),
+        onSearchProgress: ((List<String>) -> Unit)? = null,
+        modelId: String? = null  // Override model selection from ChatMode
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
             Log.d("ChatRepository", "=== SEND MESSAGE TO GROQ ===")
-            Log.d("ChatRepository", "Using system prompt: ${systemPrompt.take(100)}...")
+            
+            // Check if web search is needed
+            val shouldSearch = shouldSearchWeb(userMessage)
+            var finalSystemPrompt = systemPrompt
+            if (shouldSearch) {
+                Log.d("ChatRepository", "Query triggers web search: $userMessage")
+                onSearchProgress?.invoke(listOf("Sedang mencari...")) 
+                
+                try {
+
+                    val currentDate = java.text.SimpleDateFormat("EEEE, dd MMMM yyyy", java.util.Locale("id", "ID")).format(java.util.Date())
+                    val currentYear = currentDate.takeLast(4)
+                    
+                    val dateHeader = "CURRENT DATE: $currentDate\nThe current year is $currentYear.\n\n"
+                    
+                    val queryWithYear = "$userMessage $currentYear"
+                    Log.d("ChatRepository", "Searching with query: $queryWithYear")
+                    
+                    val serperApiKey = getSerperApiKeyFromFirebase()
+                    val searchResults = webSearchService.searchWeb(queryWithYear, serperApiKey)
+                    if (searchResults.isNotEmpty()) {
+                        // Notify progress with domains found
+                        val domains = searchResults.map { it.domain }.distinct()
+                        onSearchProgress?.invoke(domains)
+                        
+                        val searchContext = searchResults.mapIndexed { index, result ->
+                            """
+<result index="${index + 1}">
+  <title>${result.title}</title>
+  <source>${result.domain}</source>
+  <snippet>${result.snippet}</snippet>
+  <link>${result.url}</link>
+</result>
+                            """.trimIndent()
+                        }.joinToString("\n")
+                        
+                        // Context Integration Rules (User Requested Format)
+                        val contextRules = """
+# Context Integration Rules
+1. Kamu akan diberikan data hasil pencarian internet dalam tag <search_results>.
+2. Prioritaskan informasi dari <search_results> untuk pertanyaan yang berkaitan dengan berita, waktu, atau kejadian terkini di tahun $currentYear.
+3. Jika informasi dalam <search_results> tidak cukup, gunakan pengetahuan internalmu namun tetap bersikap jujur jika data tersebut mungkin sudah usang.
+
+# Response Guidelines
+- Grounding: Jangan mengarang informasi yang tidak ada dalam konteks. Jika tidak tahu, katakan "Maaf, saya tidak menemukan informasi terbaru mengenai hal tersebut."
+- Citations: Jika kamu mengambil informasi dari snippet tertentu, sebutkan sumbernya secara singkat di akhir kalimat atau paragraf dalam format [Judul Sumber].
+- Formatting: Gunakan Markdown (bold, list, table) agar jawaban mudah dibaca oleh user di aplikasi mobile.
+- Tone: Ramah, profesional, dan to-the-point sebagai seorang 'Young Practitioner' Assistant.
+
+# Constraint
+- JANGAN pernah menyebutkan bahwa kamu adalah model bahasa buatan secara berlebihan.
+- JANGAN menampilkan tag XML (<search_results>) kepada user.
+
+<search_results>
+$searchContext
+</search_results>
+                        """.trimIndent()
+                        
+                        finalSystemPrompt = dateHeader + contextRules + "\n\n" + systemPrompt
+                    } else {
+                         Log.d("ChatRepository", "Web search returned no results")
+                         onSearchProgress?.invoke(emptyList())
+                         // Still inject date if search fails
+                         finalSystemPrompt = dateHeader + systemPrompt
+                    }
+                } catch (e: Exception) {
+                    Log.e("ChatRepository", "Web search failed", e)
+                    onSearchProgress?.invoke(emptyList())
+                }
+            }
+
+            Log.d("ChatRepository", "Using system prompt length: ${finalSystemPrompt.length}")
 
             val (canProceed, errorMessage) = checkServerRateLimit(userId, maxRequests)
             if (!canProceed) {
                 return@withContext Result.failure(Exception(errorMessage))
             }
+            
+            // ... Use finalSystemPrompt below ...
 
             val apiKey = getApiKeyFromFirebase()
-            val selectedModelId = preferencesManager.selectedModelId.first()
+            val selectedModelId = modelId ?: preferencesManager.selectedModelId.first()
             val allHistory = chatDao.getChatsByConversationSync(conversationId)
 
             val limitedHistory = if (allHistory.size > MAX_HISTORY_MESSAGES) {
@@ -331,7 +425,7 @@ class ChatRepository(context: Context) {
             messages.add(
                 Message(
                     role = "system",
-                    content = systemPrompt
+                    content = finalSystemPrompt
                 )
             )
 
@@ -356,6 +450,7 @@ class ChatRepository(context: Context) {
                 maxTokens = 8096
             )
 
+            // Route to appropriate API based on model
             val response = groqApi.sendMessage(
                 authorization = "Bearer $apiKey",
                 request = request
@@ -368,8 +463,7 @@ class ChatRepository(context: Context) {
             Result.success(assistantMessage)
         } catch (e: Exception) {
             Log.e("ChatRepository", "Error in sendMessageToGroq: ${e.message}")
-
-            // ✅ Clean error messages for different scenarios
+            
             val userFriendlyMessage = when {
                 e.message?.contains("Rate limit", ignoreCase = true) == true ->
                     "Rate limit reached. Please wait before sending more messages."
@@ -397,6 +491,20 @@ class ChatRepository(context: Context) {
                 ?: throw Exception("API key not found in Firebase")
         } catch (e: Exception) {
             throw Exception("Failed to get API key: ${e.message}")
+        }
+    }
+
+
+
+    private suspend fun getSerperApiKeyFromFirebase(): String = withContext(Dispatchers.IO) {
+        try {
+            val snapshot = firebaseDb.getReference("config/serper_api_key")
+                .get()
+                .await()
+            snapshot.getValue(String::class.java)
+                ?: throw Exception("Serper API key not found in Firebase")
+        } catch (e: Exception) {
+            throw Exception("Failed to get Serper API key: ${e.message}")
         }
     }
 
@@ -452,16 +560,13 @@ class ChatRepository(context: Context) {
 
             val apiKey = getApiKeyFromFirebase()
             
-            // Use Llama 4 Maverick for vision
-            val visionModel = "meta-llama/llama-4-maverick-17b-128e-instruct"
+            // Use Llama 4 Scout for vision (User Requested)
+            val visionModel = "meta-llama/llama-4-scout-17b-16e-instruct"
             
-            // Build multimodal content
             val contentParts = mutableListOf<ContentPart>()
             
-            // Add text prompt
             contentParts.add(ContentPart.TextPart(text = userMessage))
             
-            // Add image
             val imageDataUrl = "data:image/jpeg;base64,$imageBase64"
             contentParts.add(ContentPart.ImagePart(imageUrl = ImageUrl(url = imageDataUrl)))
 
@@ -497,23 +602,114 @@ class ChatRepository(context: Context) {
             Result.success(assistantMessage)
         } catch (e: Exception) {
             Log.e("ChatRepository", "Error in sendVisionMessageToGroq: ${e.message}")
-            
-            val userFriendlyMessage = when {
-                e.message?.contains("Rate limit", ignoreCase = true) == true ->
-                    "Rate limit reached. Please wait before sending more messages."
-                e.message?.contains("network", ignoreCase = true) == true ||
-                        e.message?.contains("unable to resolve host", ignoreCase = true) == true ->
-                    "Network error. Please check your connection."
-                e.message?.contains("timeout", ignoreCase = true) == true ->
-                    "Request timed out. Please try again."
-                e.message?.contains("413", ignoreCase = true) == true ||
-                        e.message?.contains("too large", ignoreCase = true) == true ->
-                    "Image is too large. Please select a smaller image."
-                else ->
-                    "Unable to analyze image. Please try again."
+            Result.failure(e)
+        }
+    }
+
+    // --- GEMINI & HYBRID LOGIC ---
+
+    private suspend fun getGeminiApiKeyFromFirebase(): String = withContext(Dispatchers.IO) {
+        try {
+            val snapshot = firebaseDb.getReference("config/gemini_api_key")
+                .get()
+                .await()
+            snapshot.getValue(String::class.java)
+                ?: throw Exception("Gemini API key not found in Firebase")
+        } catch (e: Exception) {
+            throw Exception("Failed to get Gemini API key: ${e.message}")
+        }
+    }
+
+    suspend fun sendHybridMessage(
+        conversationId: Long,
+        userMessage: String,
+        imageBase64: String?, // Nullable for text-only
+        userId: String,
+        mode: id.xms.xcai.data.model.ChatMode,
+        maxRequests: Int = 25,
+        // System Prompt passed from ViewModel (contains Persona)
+        systemPrompt: String,
+        onSearchProgress: ((List<String>) -> Unit)? = null
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+             val (canProceed, errorMessage) = checkServerRateLimit(userId, maxRequests)
+            if (!canProceed) {
+                return@withContext Result.failure(Exception(errorMessage))
             }
+
+            // ROUTER LOGIC
+            // 1. QUICK MODE -> JALUR GEMINI (Text Only)
+            if (mode == id.xms.xcai.data.model.ChatMode.QUICK && imageBase64 == null) {
+                Log.d("ChatRepository", "Routing to GEMINI (Quick Mode)")
+                
+                val geminiKey = getGeminiApiKeyFromFirebase()
+                
+                val parts = mutableListOf<GeminiPart>()
+                parts.add(GeminiPart(text = "System: $systemPrompt\n\nUser: $userMessage"))
+                
+                val request = GeminiRequest(
+                     contents = listOf(GeminiContent(parts = parts))
+                )
+                
+                // Use Gemini 3 Flash Preview (via 2.0-flash-exp) for Quick Mode
+                val modelId = "gemini-2.0-flash-exp" 
+                val response = geminiApi.generateContent(modelId, geminiKey, request)
+                
+                val geminiText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text 
+                    ?: throw Exception("Gemini returned empty response")
+
+                return@withContext Result.success(geminiText)
+            } 
             
-            Result.failure(Exception(userFriendlyMessage))
+            // 2. IMAGE ANALYSIS -> JALUR LLAMA VISION (via Groq) + CHAINING
+            if (imageBase64 != null) {
+                Log.d("ChatRepository", "Routing to LLAMA VISION (Hybrid Vision)")
+                
+                val visionResult = sendVisionMessageToGroq(
+                    conversationId = conversationId,
+                    userMessage = userMessage, 
+                    imageBase64 = imageBase64,
+                    userId = userId,
+                    maxRequests = maxRequests
+                )
+                
+                if (visionResult.isFailure) return@withContext visionResult
+                
+                val visionAnalysis = visionResult.getOrNull() ?: ""
+                
+                if (mode == id.xms.xcai.data.model.ChatMode.QUICK) {
+                    return@withContext Result.success(visionAnalysis)
+                }
+                
+                Log.d("ChatRepository", "Chaining Vision result to Secondary Model")
+                val enrichedPrompt = "CTX [Image Analysis by Llama Vision]: $visionAnalysis\n\nUSER ORIGINAL MESSAGE: $userMessage"
+                
+                return@withContext sendMessageToGroq(
+                    conversationId, 
+                    enrichedPrompt, 
+                    userId, 
+                    Int.MAX_VALUE, // Already checked rate limit
+                    systemPrompt,  
+                    onSearchProgress, 
+                    mode.modelId // Use implicit model from mode
+                )
+            } 
+                
+            // 3. JALUR TEXT-ONLY (GROQ/KIMI)
+            Log.d("ChatRepository", "Routing to TEXT-ONLY (Groq/Kimi)")
+            return@withContext sendMessageToGroq(
+                conversationId, 
+                userMessage, 
+                userId, 
+                Int.MAX_VALUE, // Already checked rate limit
+                systemPrompt,
+                onSearchProgress,
+                mode.modelId // Use implicit model from mode
+            )
+
+        } catch (e: Exception) {
+             Log.e("ChatRepository", "Hybrid Message Error: ${e.message}", e)
+             return@withContext Result.failure(e)
         }
     }
 }

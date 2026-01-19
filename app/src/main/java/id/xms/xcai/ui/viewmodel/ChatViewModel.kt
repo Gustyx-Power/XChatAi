@@ -11,6 +11,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import id.xms.xcai.data.local.ChatEntity
 import id.xms.xcai.data.local.ConversationEntity
+import id.xms.xcai.data.model.ChatMode
 import id.xms.xcai.data.model.ResponseMode
 import id.xms.xcai.data.preferences.UserPreferences
 import id.xms.xcai.data.repository.ChatRepository
@@ -36,13 +37,17 @@ data class ChatUiState(
     val streamingText: String = "",
     val isStreaming: Boolean = false,
     val isThinking: Boolean = false,
-    val currentResponseMode: ResponseMode = ResponseMode.CHAT,
+    val currentChatMode: ChatMode = ChatMode.CHAT,
     val selectedImageUri: String? = null,  // For image preview
     val selectedImageBase64: String? = null, // For sending to API
     // STT State
     val isRecording: Boolean = false,
     val isTranscribing: Boolean = false,
-    val transcribedText: String? = null
+    val transcribedText: String? = null,
+    // Web Search State
+    val isSearching: Boolean = false,
+    val searchedSites: List<String> = emptyList(),
+    val searchResultCount: Int = 0
 )
 
 data class ConversationUiState(
@@ -73,20 +78,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private var chatCollectionJob: Job? = null
     private var streamingJob: Job? = null
     private var premiumJob: Job? = null
-    private var responseModeJob: Job? = null
     private var customPromptJob: Job? = null
     
     // Custom prompt for CUSTOM response mode
     private var _customPrompt = ""
 
     init {
-        responseModeJob = viewModelScope.launch {
-            preferencesManager.responseMode.collect { mode ->
-                _chatUiState.value = _chatUiState.value.copy(currentResponseMode = mode)
-                Log.d("ChatViewModel", "Response mode changed to: ${mode.displayName}")
-            }
-        }
-        
+        // Custom prompt loading (kept for potential future use)
         customPromptJob = viewModelScope.launch {
             preferencesManager.customPrompt.collect { prompt ->
                 _customPrompt = prompt
@@ -220,6 +218,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         isUserTyping = typing
     }
 
+    fun setChatMode(mode: ChatMode) {
+        _chatUiState.value = _chatUiState.value.copy(currentChatMode = mode)
+        Log.d("ChatViewModel", "Chat mode changed to: ${mode.name} (${mode.modelId})")
+    }
+
     fun loadRemainingRequests(userId: String) {
         viewModelScope.launch {
             try {
@@ -301,8 +304,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d("ChatViewModel", "Message: $message")
                 Log.d("ChatViewModel", "Current conversation: ${_chatUiState.value.currentConversationId}")
 
-                val responseMode = _chatUiState.value.currentResponseMode
-                Log.d("ChatViewModel", "Using response mode: ${responseMode.displayName}")
+                val chatMode = _chatUiState.value.currentChatMode
+                Log.d("ChatViewModel", "Using chat mode: ${chatMode.name} (${chatMode.modelId})")
 
                 _chatUiState.value = _chatUiState.value.copy(
                     isLoading = true,
@@ -336,19 +339,31 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                 val maxRequests = premiumManager.getMaxRequests(_premiumStatus.value)
                 
-                // Use custom prompt if CUSTOM mode is selected
-                val effectiveSystemPrompt = if (responseMode == ResponseMode.CUSTOM && _customPrompt.isNotBlank()) {
-                    "IDENTITY: XChatAi by Gusti Aditya Muzaky (GustyxPower).\n\n${_customPrompt}"
-                } else {
-                    responseMode.systemPrompt
-                }
+                // Use ChatMode's system prompt
+                val effectiveSystemPrompt = chatMode.systemPrompt
 
-                val result = repository.sendMessageToGroq(
+                // Reset search state
+                _chatUiState.value = _chatUiState.value.copy(
+                    isSearching = false,
+                    searchedSites = emptyList(),
+                    searchResultCount = 0
+                )
+
+                val result = repository.sendHybridMessage(
                     conversationId = conversationId,
                     userMessage = message,
+                    imageBase64 = null,
                     userId = userId,
+                    mode = chatMode,
                     maxRequests = maxRequests,
-                    systemPrompt = effectiveSystemPrompt
+                    systemPrompt = effectiveSystemPrompt,
+                    onSearchProgress = { sites ->
+                        _chatUiState.value = _chatUiState.value.copy(
+                            isSearching = true,
+                            searchedSites = sites,
+                            searchResultCount = sites.size
+                        )
+                    }
                 )
 
                 result.onSuccess { aiResponse ->
@@ -356,7 +371,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                     _chatUiState.value = _chatUiState.value.copy(
                         isThinking = false,
-                        isLoading = false
+                        isLoading = false,
+                        isSearching = false
                     )
 
                     startTypewriterEffect(conversationId, aiResponse)
@@ -384,7 +400,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     _chatUiState.value = _chatUiState.value.copy(
                         isLoading = false,
                         isThinking = false,
-                        error = userMessage
+                        error = userMessage,
+                        isSearching = false
                     )
 
                     loadRemainingRequests(userId)
@@ -396,7 +413,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 _chatUiState.value = _chatUiState.value.copy(
                     isLoading = false,
                     isThinking = false,
-                    error = "An unexpected error occurred. Please try again."
+                    error = "An unexpected error occurred. Please try again.",
+                    isSearching = false
                 )
 
                 loadRemainingRequests(userId)
@@ -404,10 +422,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Edit user message and resend to AI.
-     * Deletes the old user message and AI response, then sends edited message.
-     */
+
     fun editAndResendMessage(userId: String, originalMessage: ChatEntity, newMessageText: String) {
         viewModelScope.launch {
             try {
@@ -435,10 +450,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Send message with document context.
-     * Display only file indicator in chat, but send full content to AI.
-     */
     fun sendDocumentMessage(userId: String, userQuestion: String, documentName: String, documentContent: String) {
         viewModelScope.launch {
             try {
@@ -446,7 +457,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d("ChatViewModel", "Document: $documentName")
                 Log.d("ChatViewModel", "Question: $userQuestion")
 
-                val responseMode = _chatUiState.value.currentResponseMode
+                val chatMode = _chatUiState.value.currentChatMode
 
                 _chatUiState.value = _chatUiState.value.copy(
                     isLoading = true,
@@ -484,20 +495,19 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                 val maxRequests = premiumManager.getMaxRequests(_premiumStatus.value)
                 
-                // Use custom prompt if CUSTOM mode is selected
-                val effectiveSystemPrompt = if (responseMode == ResponseMode.CUSTOM && _customPrompt.isNotBlank()) {
-                    "IDENTITY: XChatAi by Gusti Aditya Muzaky (GustyxPower).\n\n${_customPrompt}"
-                } else {
-                    responseMode.systemPrompt
-                }
+                // Use ChatMode's system prompt
+                val effectiveSystemPrompt = chatMode.systemPrompt
 
                 // Send AI context (with full document) to API
-                val result = repository.sendMessageToGroq(
+                val result = repository.sendHybridMessage(
                     conversationId = conversationId,
                     userMessage = aiContext,
+                    imageBase64 = null,
                     userId = userId,
+                    mode = chatMode,
                     maxRequests = maxRequests,
-                    systemPrompt = effectiveSystemPrompt
+                    systemPrompt = effectiveSystemPrompt,
+                    onSearchProgress = null
                 )
 
                 result.onSuccess { aiResponse ->
@@ -616,9 +626,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Edit user message and regenerate AI response
-     */
     fun editMessageAndRegenerate(userId: String, messageId: String, newMessage: String) {
         viewModelScope.launch {
             try {
@@ -655,9 +662,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Regenerate the last AI response
-     */
     fun regenerateResponse(userId: String) {
         viewModelScope.launch {
             try {
@@ -684,9 +688,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-    // ✅ REMOVED: Extension functions are gone!
-    // Functions now call repository directly
 
     fun clearError() {
         _chatUiState.value = _chatUiState.value.copy(error = null)
@@ -749,12 +750,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                 val maxRequests = premiumManager.getMaxRequests(_premiumStatus.value)
 
-                val result = repository.sendVisionMessageToGroq(
+                val result = repository.sendHybridMessage(
                     conversationId = conversationId,
                     userMessage = message,
                     imageBase64 = imageBase64,
                     userId = userId,
-                    maxRequests = maxRequests
+                    mode = _chatUiState.value.currentChatMode,
+                    maxRequests = maxRequests,
+                    systemPrompt = _chatUiState.value.currentChatMode.systemPrompt,
+                    onSearchProgress = null
                 )
 
                 result.onSuccess { aiResponse ->
@@ -821,7 +825,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             chatCollectionJob?.cancel()
             streamingJob?.cancel()
             premiumJob?.cancel()
-            responseModeJob?.cancel()
+            customPromptJob?.cancel()
 
             rateLimitListener?.let { listener ->
                 currentUserId?.let { userId ->
